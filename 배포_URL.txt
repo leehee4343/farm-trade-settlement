@@ -1,0 +1,6 @@
+농장과의 거래/정산 서비스 프로토타입 - 배포 정보
+
+배포 URL (GitHub Pages) : https://leehee4343.github.io/farm-trade-settlement/
+GitHub 저장소           : https://github.com/leehee4343/farm-trade-settlement
+
+배포일 : 2026-08-19
