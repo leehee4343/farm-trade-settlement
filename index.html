@@ -807,7 +807,9 @@ function genFarm(name, herdNo, n, baseW, seed, unitPrice, payRate){
     const g = grades[Math.floor(rnd()*grades.length)];
     const sex = sexes[Math.floor(rnd()*2)];
     const wcut = (w>132||w<109)? 20000:0;
-    d.push([i, 3700+i*3, sex, w, carc, fat, g, null, wcut, 0, 0, 1500]);
+    const fcut = (fat>=30||fat<=19)? 12000+Math.floor(rnd()*8000):0;
+    const etc = rnd()<0.06 ? 20000+Math.floor(rnd()*20000):0;
+    d.push([i, 3700+i*3, sex, w, carc, fat, g, null, wcut, fcut, etc, 1500]);
   }
   return {name, herdNo, tradeQty:n, shown:n, unitPrice, payRate, detail:d};
 }
