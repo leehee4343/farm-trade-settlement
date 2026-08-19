@@ -96,7 +96,7 @@ select{cursor:pointer;}
 .stat-bar-label{width:78px;font-size:13px;color:var(--sub);font-weight:700;flex-shrink:0;}
 .stat-bar-track{flex:1;height:14px;background:var(--bg);border-radius:7px;overflow:hidden;}
 .stat-bar-fill{height:100%;border-radius:7px;background:var(--blue);}
-.stat-bar-val{width:110px;text-align:right;font-size:13px;color:var(--navy);font-weight:700;flex-shrink:0;}
+.stat-bar-val{width:130px;text-align:right;font-size:13px;color:var(--navy);font-weight:700;flex-shrink:0;white-space:nowrap;}
 
 .sum-cell{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;}
 .sum-cell .l{font-size:13px;color:var(--sub);font-weight:700;}
@@ -558,18 +558,25 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       </div>
 
       <div class="card">
-        <div class="card-h"><div class="card-t"><span class="dot"></span>등급판정 분포 (전체 개체 기준)</div></div>
-        <table class="mini-tbl">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>등급판정 분포 (전체 개체 기준)</div>
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stGradeTbl','등급판정_분포.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div id="stGradeBars"></div>
+        <table class="mini-tbl" id="stGradeTbl" style="margin-top:14px;">
           <thead><tr><th>성별</th><th>1+</th><th>1</th><th>2</th><th>등외</th><th>계</th><th>비율</th></tr></thead>
           <tbody id="stGradeBody"></tbody>
         </table>
-        <div id="stGradeBars" style="margin-top:14px;"></div>
       </div>
 
       <div class="card">
-        <div class="card-h"><div class="card-t"><span class="dot"></span>농가별 실적 순위</div></div>
-        <div class="tblx">
-        <table class="sel">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>농가별 실적 순위</div>
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stFarmRankTbl','농가별_실적순위.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div id="stFarmRankBars"></div>
+        <div class="tblx" style="margin-top:14px;">
+        <table class="sel" id="stFarmRankTbl">
           <thead><tr><th>순위</th><th>농가명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th></tr></thead>
           <tbody id="stFarmRankBody"></tbody>
         </table>
@@ -577,9 +584,13 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       </div>
 
       <div class="card">
-        <div class="card-h"><div class="card-t"><span class="dot"></span>공제 항목별 발생 현황</div></div>
-        <div class="tblx">
-        <table class="sel">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>공제 항목별 발생 현황</div>
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stDeductTbl','공제항목별_현황.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div id="stDeductBars"></div>
+        <div class="tblx" style="margin-top:14px;">
+        <table class="sel" id="stDeductTbl">
           <thead><tr><th>공제 항목</th><th>발생 건수(개체)</th><th>총 공제액</th></tr></thead>
           <tbody id="stDeductBody"></tbody>
         </table>
@@ -1060,12 +1071,13 @@ function computeAllStats(from, to, farmName){
   return s;
 }
 
-function statBarRow(label, val, total, colorVar){
+function statBarRow(label, val, total, colorVar, valueText){
   const pct = total>0 ? (val/total*100) : 0;
+  const text = valueText!==undefined ? valueText : `${val.toLocaleString('ko-KR')}건 (${pct.toFixed(1)}%)`;
   return `<div class="stat-bar-row">
     <div class="stat-bar-label">${label}</div>
-    <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct.toFixed(1)}%;background:var(${colorVar});"></div></div>
-    <div class="stat-bar-val">${val.toLocaleString('ko-KR')}건 (${pct.toFixed(1)}%)</div>
+    <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${Math.min(pct,100).toFixed(1)}%;background:var(${colorVar});"></div></div>
+    <div class="stat-bar-val">${text}</div>
   </div>`;
 }
 
@@ -1113,12 +1125,38 @@ function renderStats(){
   const ranked = Object.values(s.farmAgg).sort((a,b)=>b.amt-a.amt);
   document.getElementById('stFarmRankBody').innerHTML = ranked.map((f,i)=>`
     <tr><td>${i+1}</td><td>${f.name}</td><td>${f.cnt}건</td><td>${f.qty.toLocaleString('ko-KR')}두</td><td>${won(f.amt)}</td><td>${f.qty>0?won(f.amt/f.qty):'-'}</td></tr>`).join('');
+  const maxFarmAmt = ranked.length ? Math.max(...ranked.map(f=>f.amt), 1) : 1;
+  document.getElementById('stFarmRankBars').innerHTML = ranked.map(f=>
+    statBarRow(f.name, f.amt, maxFarmAmt, '--blue', won(f.amt))
+  ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
 
   document.getElementById('stDeductBody').innerHTML = `
     <tr><td>중량공제</td><td>${s.wcutCnt.toLocaleString('ko-KR')}건</td><td>${won(s.wcutSum)}</td></tr>
     <tr><td>등지방공제</td><td>${s.fcutCnt.toLocaleString('ko-KR')}건</td><td>${won(s.fcutSum)}</td></tr>
     <tr><td>기타공제(화농·이상육 등)</td><td>${s.etcCnt.toLocaleString('ko-KR')}건</td><td>${won(s.etcSum)}</td></tr>
     <tr><td>자조금외</td><td>${s.totalHeads.toLocaleString('ko-KR')}건</td><td>${won(s.levySum)}</td></tr>`;
+  const maxDeduct = Math.max(s.wcutSum, s.fcutSum, s.etcSum, s.levySum, 1);
+  document.getElementById('stDeductBars').innerHTML =
+    statBarRow('중량공제', s.wcutSum, maxDeduct, '--amber', won(s.wcutSum)) +
+    statBarRow('등지방공제', s.fcutSum, maxDeduct, '--amber', won(s.fcutSum)) +
+    statBarRow('기타공제', s.etcSum, maxDeduct, '--red', won(s.etcSum)) +
+    statBarRow('자조금외', s.levySum, maxDeduct, '--blue', won(s.levySum));
+}
+
+function exportTableExcel(tableId, filename){
+  const table = document.getElementById(tableId);
+  if(!table){ toast('내보낼 데이터가 없습니다.'); return; }
+  const html = `<html><head><meta charset="UTF-8"></head><body>${table.outerHTML}</body></html>`;
+  const blob = new Blob(['﻿'+html], {type:'application/vnd.ms-excel;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('엑셀 파일이 다운로드되었습니다.');
 }
 
 function viewHistoryDetail(no){
