@@ -86,6 +86,18 @@ select{cursor:pointer;}
 .sum-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
 .sum-box.row4{grid-template-columns:repeat(4,1fr);}
 
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow-card);transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s ease;}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift);}
+.kpi-card .l{font-size:13px;color:var(--sub);font-weight:700;}
+.kpi-card .v{font-size:23px;font-weight:800;color:var(--navy);margin-top:6px;}
+
+.stat-bar-row{display:flex;align-items:center;gap:10px;margin:10px 0;}
+.stat-bar-label{width:78px;font-size:13px;color:var(--sub);font-weight:700;flex-shrink:0;}
+.stat-bar-track{flex:1;height:14px;background:var(--bg);border-radius:7px;overflow:hidden;}
+.stat-bar-fill{height:100%;border-radius:7px;background:var(--blue);}
+.stat-bar-val{width:110px;text-align:right;font-size:13px;color:var(--navy);font-weight:700;flex-shrink:0;}
+
 .sum-cell{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;}
 .sum-cell .l{font-size:13px;color:var(--sub);font-weight:700;}
 .sum-cell .v{font-size:16px;font-weight:800;color:var(--navy);margin-top:3px;}
@@ -171,6 +183,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
   .side-backdrop.on{display:block;}
   .hbtn{display:flex;}
   .wrap{padding-top:64px;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
 }
 
 @media(max-width:640px){
@@ -180,6 +193,9 @@ table.sel tbody tr:hover{background:#f7fbfe;}
   .card-t{font-size:14.5px;}
   .sum-box{grid-template-columns:1fr 1fr;gap:8px;}
   .sum-box.row4{grid-template-columns:1fr 1fr;}
+  .kpi-row{grid-template-columns:1fr 1fr;gap:10px;}
+  .kpi-card{padding:12px 14px;}
+  .kpi-card .v{font-size:19px;}
   .sum-cell .v{font-size:14.5px;}
   .row{gap:8px;}
   label.lb{min-width:56px;}
@@ -207,6 +223,9 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       <div class="side-brand-t">농장과의 거래/정산 서비스</div>
     </div>
     <div class="side-div"></div>
+    <div class="nv" id="nvStats" onclick="showPage('stats',this)">
+      <div class="nv-ic">📊</div><div>통계</div>
+    </div>
     <div class="nv" id="nvFarm" onclick="showPage('farm',this)">
       <div class="nv-ic">🏠</div><div>농장정보 관리</div>
     </div>
@@ -507,6 +526,59 @@ table.sel tbody tr:hover{background:#f7fbfe;}
     </div>
   </div>
 
+  <!-- ============ PAGE 5 : 통계 ============ -->
+  <div class="page" id="statsPage">
+    <div class="wrap">
+      <h2 class="pg-title">통계</h2>
+      <p class="pg-sub">전체 거래내역을 기반으로 집계한 거래실적, 품질(등급), 공제 통계입니다.</p>
+
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="l">총 거래건수</div><div class="v" id="stTotalCnt">-</div></div>
+        <div class="kpi-card"><div class="l">총 거래두수</div><div class="v" id="stTotalQty">-</div></div>
+        <div class="kpi-card"><div class="l">총 차인지급액</div><div class="v" id="stTotalAmt">-</div></div>
+        <div class="kpi-card"><div class="l">참여 농가 수</div><div class="v" id="stFarmCnt">-</div></div>
+        <div class="kpi-card"><div class="l">평균 kg당 단가</div><div class="v" id="stAvgPrice">-</div></div>
+        <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="stAvgYield">-</div></div>
+        <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="stAvgRate">-</div></div>
+        <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="stAbRate">-</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><div class="card-t"><span class="dot"></span>거래 상태 현황</div></div>
+        <div id="stStatusBars"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><div class="card-t"><span class="dot"></span>등급판정 분포 (전체 개체 기준)</div></div>
+        <table class="mini-tbl">
+          <thead><tr><th>성별</th><th>1+</th><th>1</th><th>2</th><th>등외</th><th>계</th><th>비율</th></tr></thead>
+          <tbody id="stGradeBody"></tbody>
+        </table>
+        <div id="stGradeBars" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><div class="card-t"><span class="dot"></span>농가별 실적 순위</div></div>
+        <div class="tblx">
+        <table class="sel">
+          <thead><tr><th>순위</th><th>농가명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th></tr></thead>
+          <tbody id="stFarmRankBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><div class="card-t"><span class="dot"></span>공제 항목별 발생 현황</div></div>
+        <div class="tblx">
+        <table class="sel">
+          <thead><tr><th>공제 항목</th><th>발생 건수(개체)</th><th>총 공제액</th></tr></thead>
+          <tbody id="stDeductBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </main>
 </div>
 
@@ -651,8 +723,8 @@ function updateStatementMode(){
 const won = n => Math.round(n).toLocaleString('ko-KR')+' 원';
 
 /* ===================== 네비게이션 (URL 해시 라우팅) ===================== */
-const PAGE_MAP={statement:'statementPage', history:'historyPage', farm:'farmPage', deduct:'deductPage'};
-const NAV_ID={statement:'nvHistory', history:'nvHistory', farm:'nvFarm', deduct:'nvFarm'};
+const PAGE_MAP={statement:'statementPage', history:'historyPage', farm:'farmPage', deduct:'deductPage', stats:'statsPage'};
+const NAV_ID={statement:'nvHistory', history:'nvHistory', farm:'nvFarm', deduct:'nvFarm', stats:'nvStats'};
 
 function showPage(name, el){
   if(!PAGE_MAP[name]) name='history';
@@ -664,6 +736,7 @@ function showPage(name, el){
   document.getElementById('mainArea').scrollTo({top:0});
   closeSide();
   if(location.hash !== '#'+name) location.hash = name;
+  if(name==='stats') renderStats();
 }
 
 window.addEventListener('hashchange', ()=>{
@@ -931,6 +1004,100 @@ function buildFarmDataFromHistory(h){
   const seed = (parseInt((h.no.match(/(\d+)$/)||[])[1],10) || 1) * 7 + 3;
   return genFarm(h.name, h.herd, h.qty, 119, seed);
 }
+/* ===================== 통계 ===================== */
+function computeAllStats(){
+  const s = {
+    totalCnt: historySeed.length, totalQty:0, totalAmt:0,
+    confirmedCnt:0, waitingCnt:0,
+    totalW:0, totalCarc:0, totalFat:0, totalHeads:0,
+    gradeCounts:{'암':{'1+':0,'1':0,'2':0,'등외':0},'수':{'1+':0,'1':0,'2':0,'등외':0},'거세':{'1+':0,'1':0,'2':0,'등외':0}},
+    wcutSum:0, wcutCnt:0, fcutSum:0, fcutCnt:0, etcSum:0, etcCnt:0, levySum:0,
+    priceWeighted:0, rateWeighted:0,
+    farmAgg:{}
+  };
+  historySeed.forEach(h=>{
+    s.totalQty += h.qty;
+    s.totalAmt += h.amt;
+    if(h.status==='확정') s.confirmedCnt++; else s.waitingCnt++;
+
+    if(!s.farmAgg[h.name]) s.farmAgg[h.name] = {name:h.name, cnt:0, qty:0, amt:0};
+    const fa = s.farmAgg[h.name];
+    fa.cnt += 1; fa.qty += h.qty; fa.amt += h.amt;
+
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      const [no, herd, sex, w, carc, fat, grade, base, wcut, fcut, etc, levy] = r;
+      s.totalW += w; s.totalCarc += carc; s.totalFat += fat; s.totalHeads++;
+      const g = s.gradeCounts[sex] ? sex : '거세';
+      const gk = s.gradeCounts[g][grade]!==undefined ? grade : '등외';
+      s.gradeCounts[g][gk] += 1;
+      if(wcut){ s.wcutSum+=wcut; s.wcutCnt++; }
+      if(fcut){ s.fcutSum+=fcut; s.fcutCnt++; }
+      if(etc){ s.etcSum+=etc; s.etcCnt++; }
+      s.levySum += levy||0;
+      s.priceWeighted += (farm.unitPrice||0) * w;
+      s.rateWeighted += (farm.payRate||0) * w;
+    });
+  });
+  return s;
+}
+
+function statBarRow(label, val, total, colorVar){
+  const pct = total>0 ? (val/total*100) : 0;
+  return `<div class="stat-bar-row">
+    <div class="stat-bar-label">${label}</div>
+    <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct.toFixed(1)}%;background:var(${colorVar});"></div></div>
+    <div class="stat-bar-val">${val.toLocaleString('ko-KR')}건 (${pct.toFixed(1)}%)</div>
+  </div>`;
+}
+
+function renderStats(){
+  const s = computeAllStats();
+  const totalGrade = {'1+':0,'1':0,'2':0,'등외':0};
+  ['암','수','거세'].forEach(sex=>{
+    Object.keys(totalGrade).forEach(g=>{ totalGrade[g] += s.gradeCounts[sex][g]; });
+  });
+  const abCnt = totalGrade['1+'] + totalGrade['1'];
+
+  setText('stTotalCnt', s.totalCnt.toLocaleString('ko-KR')+'건');
+  setText('stTotalQty', s.totalQty.toLocaleString('ko-KR')+'두');
+  setText('stTotalAmt', won(s.totalAmt));
+  setText('stFarmCnt', farmListSeed.length.toLocaleString('ko-KR')+'개소');
+  setText('stAvgPrice', s.totalW>0 ? Math.round(s.priceWeighted/s.totalW).toLocaleString('ko-KR')+' 원/kg' : '-');
+  setText('stAvgYield', s.totalW>0 ? (s.totalCarc/s.totalW*100).toFixed(2)+' %' : '-');
+  setText('stAvgRate', s.totalW>0 ? (s.rateWeighted/s.totalW).toFixed(2)+' %' : '-');
+  setText('stAbRate', s.totalHeads>0 ? (abCnt/s.totalHeads*100).toFixed(2)+' %' : '-');
+
+  document.getElementById('stStatusBars').innerHTML =
+    statBarRow('확정', s.confirmedCnt, s.totalCnt, '--green') +
+    statBarRow('대기', s.waitingCnt, s.totalCnt, '--amber');
+
+  let gradeBody = '';
+  ['암','수','거세'].forEach(sex=>{
+    const g = s.gradeCounts[sex];
+    const cnt = g['1+']+g['1']+g['2']+g['등외'];
+    if(cnt===0) return;
+    gradeBody += `<tr><td>${sex}</td><td>${g['1+']||'-'}</td><td>${g['1']||'-'}</td><td>${g['2']||'-'}</td><td>${g['등외']||'-'}</td><td>${cnt}</td><td>${(cnt/s.totalHeads*100).toFixed(2)}%</td></tr>`;
+  });
+  gradeBody += `<tr><td>합계</td><td>${totalGrade['1+']}</td><td>${totalGrade['1']}</td><td>${totalGrade['2']}</td><td>${totalGrade['등외']}</td><td>${s.totalHeads}</td><td>100.00%</td></tr>`;
+  document.getElementById('stGradeBody').innerHTML = gradeBody;
+  document.getElementById('stGradeBars').innerHTML =
+    statBarRow('1+등급', totalGrade['1+'], s.totalHeads, '--green') +
+    statBarRow('1등급', totalGrade['1'], s.totalHeads, '--blue') +
+    statBarRow('2등급', totalGrade['2'], s.totalHeads, '--amber') +
+    statBarRow('등외', totalGrade['등외'], s.totalHeads, '--red');
+
+  const ranked = Object.values(s.farmAgg).sort((a,b)=>b.amt-a.amt);
+  document.getElementById('stFarmRankBody').innerHTML = ranked.map((f,i)=>`
+    <tr><td>${i+1}</td><td>${f.name}</td><td>${f.cnt}건</td><td>${f.qty.toLocaleString('ko-KR')}두</td><td>${won(f.amt)}</td><td>${f.qty>0?won(f.amt/f.qty):'-'}</td></tr>`).join('');
+
+  document.getElementById('stDeductBody').innerHTML = `
+    <tr><td>중량공제</td><td>${s.wcutCnt.toLocaleString('ko-KR')}건</td><td>${won(s.wcutSum)}</td></tr>
+    <tr><td>등지방공제</td><td>${s.fcutCnt.toLocaleString('ko-KR')}건</td><td>${won(s.fcutSum)}</td></tr>
+    <tr><td>기타공제(화농·이상육 등)</td><td>${s.etcCnt.toLocaleString('ko-KR')}건</td><td>${won(s.etcSum)}</td></tr>
+    <tr><td>자조금외</td><td>${s.totalHeads.toLocaleString('ko-KR')}건</td><td>${won(s.levySum)}</td></tr>`;
+}
+
 function viewHistoryDetail(no){
   const h = historySeed.find(x=>x.no===no);
   if(!h) return;
