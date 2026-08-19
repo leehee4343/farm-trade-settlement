@@ -1798,6 +1798,7 @@ function renderStats(){
 }
 
 function exportTableExcel(tableId, filename){
+  if(!confirm('데이터를 추출하는 데 시간이 걸릴 수 있습니다. 진행하시겠습니까?')) return;
   const table = document.getElementById(tableId);
   if(!table){ toast('내보낼 데이터가 없습니다.'); return; }
   const html = `<html><head><meta charset="UTF-8"></head><body>${table.outerHTML}</body></html>`;
@@ -1874,6 +1875,7 @@ function saveEditedStatement(){
 
 function exportStatementExcel(){
   if(!curFarm){ toast('거래 건을 먼저 불러와주세요.'); return; }
+  if(!confirm('데이터를 추출하는 데 시간이 걸릴 수 있습니다. 진행하시겠습니까?')) return;
   const gv = id => document.getElementById(id)?.textContent ?? '';
   const detailRows = curFarm.detail.map(r=>{
     const [no, herd, sex, w, carc, fat, grade, base, wcut, fcut, etc, levy] = r;
