@@ -797,15 +797,16 @@ const farmA = {
 function genFarm(name, herdNo, n, baseW, seed, unitPrice, payRate){
   unitPrice = unitPrice || 6057;
   payRate = payRate || 76;
-  const sexes=['암','거세','수']; const grades=['1+','1','2'];
   let d=[]; let s=seed;
   const rnd=()=>{s=(s*9301+49297)%233280; return s/233280;};
   for(let i=1;i<=n;i++){
     const w = +(baseW + rnd()*22 - 11).toFixed(2);
     const carc = Math.round(w*0.765);
     const fat = Math.round(18 + rnd()*16);
-    const g = grades[Math.floor(rnd()*grades.length)];
-    const sex = sexes[Math.floor(rnd()*2)];
+    const gradeRoll = rnd();
+    const g = gradeRoll<0.30 ? '1+' : gradeRoll<0.65 ? '1' : gradeRoll<0.95 ? '2' : '등외';
+    const sexRoll = rnd();
+    const sex = sexRoll<0.47 ? '암' : sexRoll<0.95 ? '거세' : '수';
     const wcut = (w>132||w<109)? 20000:0;
     const fcut = (fat>=30||fat<=19)? 12000+Math.floor(rnd()*8000):0;
     const etc = rnd()<0.06 ? 20000+Math.floor(rnd()*20000):0;
