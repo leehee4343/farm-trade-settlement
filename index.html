@@ -102,7 +102,7 @@ select{cursor:pointer;}
 .seg-btn.on{background:var(--navy);color:#fff;}
 
 .stat-bar-row{display:flex;align-items:center;gap:10px;margin:10px 0;}
-.stat-bar-label{width:78px;font-size:13px;color:var(--sub);font-weight:700;flex-shrink:0;}
+.stat-bar-label{width:110px;font-size:13px;color:var(--sub);font-weight:700;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stat-bar-track{flex:1;height:14px;background:var(--bg);border-radius:7px;overflow:hidden;}
 .stat-bar-fill{height:100%;border-radius:7px;background:var(--blue);}
 .stat-bar-val{width:130px;text-align:right;font-size:13px;color:var(--navy);font-weight:700;flex-shrink:0;white-space:nowrap;}
@@ -1308,7 +1308,7 @@ let historySeed = generateHistorySeed(550, 20260101);
 let slipSeq = historySeed.length;
 
 /* ===================== 통계(관리자용) 모의 데이터 : 업체별 거래내역 ===================== */
-const ADMIN_COMPANY_POOL = ['A업체','B업체','C업체','D업체','E업체'];
+const ADMIN_COMPANY_POOL = ['A식육포장처리업체','B식육포장처리업체','C식육포장처리업체','D식육포장처리업체','E식육포장처리업체'];
 function generateAdminHistorySeed(){
   let all = [];
   ADMIN_COMPANY_POOL.forEach((company, i)=>{
