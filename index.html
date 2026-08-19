@@ -235,7 +235,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       <div class="nv-ic">📂</div><div>거래내역 조회</div>
     </div>
     <div class="nv" id="nvStats" onclick="showPage('stats',this)">
-      <div class="nv-ic">📊</div><div>통계</div>
+      <div class="nv-ic">📊</div><div>통계(업체용)</div>
     </div>
   </aside>
 
@@ -361,7 +361,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
             <option value="">전체 농가</option>
           </select>
           <label class="lb" style="display:inline;min-width:0;">거래일</label>
-          <input type="date" id="historyFrom" value="2026-01-01" style="max-width:160px;">
+          <input type="date" id="historyFrom" value="2026-06-01" style="max-width:160px;">
           <span style="color:var(--sub);">~</span>
           <input type="date" id="historyTo" value="2026-08-20" style="max-width:160px;">
           <button class="btn btn-pri" onclick="renderHistory()">조회</button>
@@ -534,7 +534,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
   <!-- ============ PAGE 5 : 통계 ============ -->
   <div class="page" id="statsPage">
     <div class="wrap">
-      <h2 class="pg-title">통계</h2>
+      <h2 class="pg-title">통계(업체용)</h2>
       <p class="pg-sub">확정된 거래내역을 기간(거래일) 기준으로 집계한 거래실적, 품질(등급), 공제 통계입니다.</p>
 
       <div class="card">
@@ -565,21 +565,42 @@ table.sel tbody tr:hover{background:#f7fbfe;}
 
       <div class="card">
         <div class="card-h">
-          <div class="card-t"><span class="dot"></span>거래금액 및 평균 kg당가격 추이</div>
-          <div class="seg-group" id="trendGran">
-            <button class="seg-btn on" onclick="setGranularity('trend','month',this)">월</button>
-            <button class="seg-btn" onclick="setGranularity('trend','week',this)">주</button>
-            <button class="seg-btn" onclick="setGranularity('trend','day',this)">일</button>
+          <div class="card-t"><span class="dot"></span>거래금액 추이</div>
+          <div class="seg-group" id="amtGran">
+            <button class="seg-btn on" onclick="setGranularity('amt','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularity('amt','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularity('amt','day',this)">일</button>
           </div>
         </div>
-        <div id="trendChart"></div>
+        <div id="amtChart"></div>
         <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
-          <button class="btn btn-line btn-sm" onclick="exportTableExcel('trendTbl','거래금액_평균단가_추이.xls')">⬇ 엑셀 다운로드</button>
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('amtTbl','거래금액_추이.xls')">⬇ 엑셀 다운로드</button>
         </div>
         <div class="tblx">
-        <table class="sel" id="trendTbl">
-          <thead><tr id="trendTblHead"><th>구분</th></tr></thead>
-          <tbody id="trendTblBody"></tbody>
+        <table class="sel" id="amtTbl">
+          <thead><tr id="amtTblHead"><th>구분</th></tr></thead>
+          <tbody id="amtTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>평균 kg당가격 추이 (생체중 기준, 지육중 기준)</div>
+          <div class="seg-group" id="priceGran">
+            <button class="seg-btn on" onclick="setGranularity('price','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularity('price','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularity('price','day',this)">일</button>
+          </div>
+        </div>
+        <div id="priceChart"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('priceTbl','평균단가_추이.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="priceTbl">
+          <thead><tr id="priceTblHead"><th>구분</th></tr></thead>
+          <tbody id="priceTblBody"></tbody>
         </table>
         </div>
       </div>
@@ -1009,7 +1030,7 @@ function confirmSettle(){
 }
 
 /* ===================== 거래내역 조회 (모의 데이터 자동 생성) ===================== */
-// 2026-01-01 ~ 2026-08-20(오늘) 사이에 약 200건의 거래내역을 절차적으로 생성
+// 2024-01-01 ~ 2026-08-20(오늘) 사이에 약 400건의 거래내역을 절차적으로 생성
 const HIST_FARM_POOL = [
   {name:'A농가', herd:'118701700872'}, {name:'B농가', herd:'118701700873'},
   {name:'C농가', herd:'118701700874'}, {name:'D농가', herd:'118701700875'},
@@ -1017,15 +1038,18 @@ const HIST_FARM_POOL = [
   {name:'G농가', herd:'118701700878'}, {name:'H농가', herd:'118701700879'},
   {name:'I농가', herd:'118701700880'}, {name:'J농가', herd:'118701700881'}
 ];
+const HIST_START_DATE = new Date(2024,0,1);
+const HIST_END_DATE = new Date(2026,7,20);
+const HIST_DAY_SPAN = Math.round((HIST_END_DATE-HIST_START_DATE)/86400000) + 1;
 function offsetToDate2026(offset){
-  const d = new Date(2026,0,1);
+  const d = new Date(HIST_START_DATE);
   d.setDate(d.getDate()+offset);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function generateHistorySeed(count, seed){
   let s = seed;
   const rnd = ()=>{ s = (s*9301+49297)%233280; return s/233280; };
-  const DAY_SPAN = 232; // 2026-01-01 ~ 2026-08-20
+  const DAY_SPAN = HIST_DAY_SPAN; // 2024-01-01 ~ 2026-08-20
   const rows = [];
   for(let i=0;i<count;i++){
     const date = offsetToDate2026(Math.floor(rnd()*DAY_SPAN));
@@ -1049,7 +1073,7 @@ function generateHistorySeed(count, seed){
   });
   return rows.reverse(); // 최신 거래일이 먼저 오도록
 }
-let historySeed = generateHistorySeed(200, 20260101);
+let historySeed = generateHistorySeed(400, 20260101);
 let slipSeq = historySeed.length;
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function nowStr(){
@@ -1155,15 +1179,15 @@ function statBarRow(label, val, total, colorVar, valueText){
 
 /* ---- 거래금액/평균단가 추이 (월·주·일) ---- */
 /* ---- 기간(월/주/일) 공통 유틸 ---- */
-const granState = {trend:'month', grade:'month', deduct:'month'};
+const granState = {amt:'month', price:'month', grade:'month', deduct:'month'};
+const GRAN_GROUP_ID = {amt:'amtGran', price:'priceGran', grade:'gradeGranGroup', deduct:'deductGranGroup'};
+const GRAN_RENDER_FN = {amt:()=>renderAmtTrend(), price:()=>renderPriceTrend(), grade:()=>renderGradeTrend(), deduct:()=>renderDeductTrend()};
 function setGranularity(kind, gran, el){
   granState[kind] = gran;
-  const groupId = kind==='trend' ? 'trendGran' : kind==='grade' ? 'gradeGranGroup' : 'deductGranGroup';
+  const groupId = GRAN_GROUP_ID[kind];
   document.querySelectorAll('#'+groupId+' .seg-btn').forEach(b=>b.classList.remove('on'));
   if(el) el.classList.add('on');
-  if(kind==='trend') renderTrendChart();
-  else if(kind==='grade') renderGradeTrend();
-  else renderDeductTrend();
+  GRAN_RENDER_FN[kind]();
 }
 function periodKey(dateStr, gran){
   if(gran==='day') return dateStr;
@@ -1266,13 +1290,90 @@ function renderBarLineChart(containerId, data, opts){
     <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
 }
 
-/* ---- 거래금액 및 평균 kg당가격 추이 (생체중/지육중 기준 모두) ---- */
-function computeTrendData(gran){
+/* ---- 두 선 그래프(공통 축) : 단위가 같은 두 지표를 겹쳐서 비교 ---- */
+function renderDualLineChart(containerId, data, opts){
+  const wrap = document.getElementById(containerId);
+  if(!wrap) return;
+  if(data.length===0){
+    wrap.innerHTML = '<p style="color:var(--sub);font-size:13px;padding:24px 0;text-align:center;">해당 조건의 데이터가 없습니다.</p>';
+    return;
+  }
+  const n = data.length;
+  const rotateLabels = opts.gran !== 'month';
+  const slot = 56;
+  const padL=56, padR=24, padT=20, padB = rotateLabels?64:40;
+  const plotW = Math.max(560, n*slot);
+  const W = plotW+padL+padR, H = 300;
+  const plotH = H-padT-padB;
+  const vals1 = data.map(d=>d[opts.field1]);
+  const vals2 = data.map(d=>d[opts.field2]);
+  const allVals = vals1.concat(vals2);
+  const minV = Math.min(...allVals) * 0.97;
+  const maxV = Math.max(...allVals, minV+1) * 1.03;
+  const range = (maxV-minV) || 1;
+
+  let xlabels='', pts1=[], pts2=[];
+  data.forEach((d,i)=>{
+    const cx = padL + slot*i + slot/2;
+    pts1.push([cx, padT+plotH-((vals1[i]-minV)/range)*plotH]);
+    pts2.push([cx, padT+plotH-((vals2[i]-minV)/range)*plotH]);
+    const ly = padT+plotH+16;
+    xlabels += rotateLabels
+      ? `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="end" font-size="11" fill="#64748b" transform="rotate(-45 ${cx.toFixed(1)} ${ly})">${d.label}</text>`
+      : `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="11" fill="#64748b">${d.label}</text>`;
+  });
+  const line1 = `<polyline points="${pts1.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${opts.color1}" stroke-width="2.5"/>`;
+  const dots1 = pts1.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${opts.color1}"/>`).join('');
+  const line2 = `<polyline points="${pts2.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${opts.color2}" stroke-width="2.5" stroke-dasharray="5,3"/>`;
+  const dots2 = pts2.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${opts.color2}"/>`).join('');
+
+  let grid='';
+  for(let t=0;t<=4;t++){
+    const y = padT + plotH - (plotH/4)*t;
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="#eef1f5" stroke-width="1"/>`;
+    grid += `<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#64748b">${(minV+range/4*t).toFixed(opts.decimals||0)}</text>`;
+  }
+  const legend = `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.color1};border-radius:50%;margin-right:5px;"></span>${opts.label1}</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:${opts.color2};border-radius:50%;margin-right:5px;"></span>${opts.label2}</span>`;
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto;">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${line1}${dots1}${line2}${dots2}${xlabels}</svg>
+    </div>
+    <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
+}
+
+/* ---- 거래금액 추이 (거래두수 포함) ---- */
+function computeAmtTrendData(gran){
   const buckets = {};
   filteredConfirmedRows().forEach(h=>{
     const key = periodKey(h.date, gran);
-    if(!buckets[key]) buckets[key] = {key, amt:0, priceWeighted:0, weight:0, carcWeight:0};
+    if(!buckets[key]) buckets[key] = {key, amt:0, qty:0};
     buckets[key].amt += h.amt;
+    buckets[key].qty += h.qty;
+  });
+  return Object.keys(buckets).sort().map(k=>({
+    label: periodLabel(k, gran),
+    amtWan: Math.round(buckets[k].amt/10000),
+    qty: buckets[k].qty
+  }));
+}
+function renderAmtTrend(){
+  const gran = granState.amt;
+  const data = computeAmtTrendData(gran);
+  renderBarLineChart('amtChart', data, {gran, barField:'amtWan', barColor:'#1a5fb4', barLabel:'거래금액(만원)', lineField:'qty', lineColor:'#f5870a', lineLabel:'거래두수(두)'});
+  document.getElementById('amtTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('amtTblBody').innerHTML =
+    '<tr><td>거래금액(만원)</td>' + data.map(d=>`<td>${d.amtWan.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>거래두수(두)</td>' + data.map(d=>`<td>${d.qty.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+}
+
+/* ---- 평균 kg당가격 추이 (생체중/지육중 기준) ---- */
+function computePriceTrendData(gran){
+  const buckets = {};
+  filteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, priceWeighted:0, weight:0, carcWeight:0};
     const farm = buildFarmDataFromHistory(h);
     farm.detail.forEach(r=>{
       const w = r[3], carc = r[4];
@@ -1283,24 +1384,18 @@ function computeTrendData(gran){
   });
   return Object.keys(buckets).sort().map(k=>({
     label: periodLabel(k, gran),
-    amtWan: Math.round(buckets[k].amt/10000),
     price: buckets[k].weight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].weight) : 0,
     priceCarc: buckets[k].carcWeight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].carcWeight) : 0
   }));
 }
-function renderTrendChart(){
-  const gran = granState.trend;
-  const data = computeTrendData(gran);
-  renderBarLineChart('trendChart', data, {
-    gran, barField:'amtWan', barColor:'#1a5fb4', barLabel:'거래금액(만원)',
-    lineField:'price', lineColor:'#f5870a', lineLabel:'평균 kg당가격 - 생체중 기준(원)',
-    lineField2:'priceCarc', lineColor2:'#16a34a', lineLabel2:'평균 kg당가격 - 지육중 기준(원)'
-  });
-  document.getElementById('trendTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
-  document.getElementById('trendTblBody').innerHTML =
-    '<tr><td>거래금액(만원)</td>' + data.map(d=>`<td>${d.amtWan.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
-    '<tr><td>평균 kg당가격 - 생체중 기준(원)</td>' + data.map(d=>`<td>${d.price.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
-    '<tr><td>평균 kg당가격 - 지육중 기준(원)</td>' + data.map(d=>`<td>${d.priceCarc.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+function renderPriceTrend(){
+  const gran = granState.price;
+  const data = computePriceTrendData(gran);
+  renderDualLineChart('priceChart', data, {gran, field1:'price', color1:'#f5870a', label1:'생체중 기준(원/kg)', field2:'priceCarc', color2:'#16a34a', label2:'지육중 기준(원/kg)'});
+  document.getElementById('priceTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('priceTblBody').innerHTML =
+    '<tr><td>생체중 기준(원/kg)</td>' + data.map(d=>`<td>${d.price.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>지육중 기준(원/kg)</td>' + data.map(d=>`<td>${d.priceCarc.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
 }
 
 /* ---- 등급판정 분포 추이 ---- */
@@ -1398,7 +1493,8 @@ function renderStats(){
     statBarRow(f.name, f.amt, maxFarmAmt, '--blue', won(f.amt))
   ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
 
-  renderTrendChart();
+  renderAmtTrend();
+  renderPriceTrend();
   renderGradeTrend();
   renderDeductTrend();
 }
