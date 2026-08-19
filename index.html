@@ -91,6 +91,10 @@ select{cursor:pointer;}
 .kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift);}
 .kpi-card .l{font-size:13px;color:var(--sub);font-weight:700;}
 .kpi-card .v{font-size:23px;font-weight:800;color:var(--navy);margin-top:6px;}
+.kpi-card .d{font-size:12.5px;font-weight:700;margin-top:5px;}
+.kpi-card .d.up{color:var(--red-dk);}
+.kpi-card .d.down{color:var(--blue-dk);}
+.kpi-card .d.flat{color:var(--sub);}
 
 .seg-group{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px;flex-shrink:0;}
 .seg-btn{border:none;background:transparent;padding:0 14px;height:30px;border-radius:6px;font-size:13px;font-weight:700;color:var(--sub);cursor:pointer;transition:background .15s ease,color .15s ease;}
@@ -552,15 +556,15 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       </div>
 
       <div class="kpi-row">
-        <div class="kpi-card"><div class="l">총 거래건수</div><div class="v" id="stTotalCnt">-</div></div>
-        <div class="kpi-card"><div class="l">총 거래두수</div><div class="v" id="stTotalQty">-</div></div>
-        <div class="kpi-card"><div class="l">총 차인지급액</div><div class="v" id="stTotalAmt">-</div></div>
+        <div class="kpi-card"><div class="l">총 거래건수</div><div class="v" id="stTotalCnt">-</div><div class="d" id="stTotalCntDelta"></div></div>
+        <div class="kpi-card"><div class="l">총 거래두수</div><div class="v" id="stTotalQty">-</div><div class="d" id="stTotalQtyDelta"></div></div>
+        <div class="kpi-card"><div class="l">총 차인지급액</div><div class="v" id="stTotalAmt">-</div><div class="d" id="stTotalAmtDelta"></div></div>
         <div class="kpi-card"><div class="l">참여 농가 수</div><div class="v" id="stFarmCnt">-</div></div>
-        <div class="kpi-card"><div class="l">평균 kg당 단가 (생체중 기준)</div><div class="v" id="stAvgPrice">-</div></div>
-        <div class="kpi-card"><div class="l">평균 kg당 단가 (지육중 기준)</div><div class="v" id="stAvgPriceCarc">-</div></div>
-        <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="stAvgYield">-</div></div>
-        <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="stAvgRate">-</div></div>
-        <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="stAbRate">-</div></div>
+        <div class="kpi-card"><div class="l">평균 kg당 단가 (생체중 기준)</div><div class="v" id="stAvgPrice">-</div><div class="d" id="stAvgPriceDelta"></div></div>
+        <div class="kpi-card"><div class="l">평균 kg당 단가 (지육중 기준)</div><div class="v" id="stAvgPriceCarc">-</div><div class="d" id="stAvgPriceCarcDelta"></div></div>
+        <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="stAvgYield">-</div><div class="d" id="stAvgYieldDelta"></div></div>
+        <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="stAvgRate">-</div><div class="d" id="stAvgRateDelta"></div></div>
+        <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="stAbRate">-</div><div class="d" id="stAbRateDelta"></div></div>
       </div>
 
       <div class="card">
@@ -628,6 +632,22 @@ table.sel tbody tr:hover{background:#f7fbfe;}
 
       <div class="card">
         <div class="card-h">
+          <div class="card-t"><span class="dot"></span>성별(암/수/거세) 비중 및 등급 분포 비교</div>
+        </div>
+        <div id="stSexBars"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stSexTbl','성별_비중_등급분포.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="stSexTbl">
+          <thead><tr><th>성별</th><th>두수</th><th>비중(%)</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
+          <tbody id="stSexTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
           <div class="card-t"><span class="dot"></span>농가별 실적 순위</div>
           <div class="seg-group" id="farmRankMetricGroup">
             <button class="seg-btn on" onclick="setFarmRankMetric('amt',this)">거래금액</button>
@@ -665,6 +685,27 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         <table class="sel" id="stDeductTbl">
           <thead><tr id="stDeductTblHead"><th>공제 항목</th></tr></thead>
           <tbody id="stDeductTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>공제 발생율 (건수 기준, %)</div>
+          <div class="seg-group" id="deductRateGranGroup">
+            <button class="seg-btn on" onclick="setGranularity('deductRate','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularity('deductRate','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularity('deductRate','day',this)">일</button>
+          </div>
+        </div>
+        <div id="stDeductRateChart"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stDeductRateTbl','공제발생율.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="stDeductRateTbl">
+          <thead><tr id="stDeductRateTblHead"><th>구분</th></tr></thead>
+          <tbody id="stDeductRateTblBody"></tbody>
         </table>
         </div>
       </div>
@@ -1189,7 +1230,7 @@ function statBarRow(label, val, total, colorVar, valueText){
 
 /* ---- 거래금액/평균단가 추이 (월·주·일) ---- */
 /* ---- 기간(월/주/일) 공통 유틸 ---- */
-const granState = {amt:'month', price:'month', grade:'month', deduct:'month'};
+const granState = {amt:'month', price:'month', grade:'month', deduct:'month', deductRate:'month'};
 
 let statsFarmAggCache = {};
 let farmRankMetric = 'amt';
@@ -1216,8 +1257,8 @@ function renderFarmRank(){
     statBarRow(f.name, f[meta.field], maxVal, meta.color, meta.fmt(f[meta.field]))
   ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
 }
-const GRAN_GROUP_ID = {amt:'amtGran', price:'priceGran', grade:'gradeGranGroup', deduct:'deductGranGroup'};
-const GRAN_RENDER_FN = {amt:()=>renderAmtTrend(), price:()=>renderPriceTrend(), grade:()=>renderGradeTrend(), deduct:()=>renderDeductTrend()};
+const GRAN_GROUP_ID = {amt:'amtGran', price:'priceGran', grade:'gradeGranGroup', deduct:'deductGranGroup', deductRate:'deductRateGranGroup'};
+const GRAN_RENDER_FN = {amt:()=>renderAmtTrend(), price:()=>renderPriceTrend(), grade:()=>renderGradeTrend(), deduct:()=>renderDeductTrend(), deductRate:()=>renderDeductRateTrend()};
 function setGranularity(kind, gran, el){
   granState[kind] = gran;
   const groupId = GRAN_GROUP_ID[kind];
@@ -1429,6 +1470,66 @@ function renderDualLineChart(containerId, data, opts){
   attachChartTooltip(wrap, {data, padL, slot, series});
 }
 
+/* ---- 여러 선 그래프(공통 축) : 셋 이상의 지표를 겹쳐서 비교 ---- */
+function renderMultiLineChart(containerId, data, opts){
+  const wrap = document.getElementById(containerId);
+  if(!wrap) return;
+  if(data.length===0){
+    wrap.innerHTML = '<p style="color:var(--sub);font-size:13px;padding:24px 0;text-align:center;">해당 조건의 데이터가 없습니다.</p>';
+    return;
+  }
+  const n = data.length;
+  const rotateLabels = opts.gran !== 'month';
+  const slot = 56;
+  const padL=56, padR=24, padT=20, padB = rotateLabels?64:40;
+  const plotW = Math.max(560, n*slot);
+  const W = plotW+padL+padR, H = 300;
+  const plotH = H-padT-padB;
+  const allVals = opts.lines.flatMap(ln=>data.map(d=>d[ln.field]));
+  const minV = Math.min(0, ...allVals) * (Math.min(...allVals)<0 ? 1.05 : 0.97);
+  const maxV = Math.max(...allVals, minV+1) * 1.05;
+  const range = (maxV-minV) || 1;
+
+  let xlabels='';
+  const linePts = opts.lines.map(()=>[]);
+  data.forEach((d,i)=>{
+    const cx = padL + slot*i + slot/2;
+    opts.lines.forEach((ln,li)=>{
+      linePts[li].push([cx, padT+plotH-((d[ln.field]-minV)/range)*plotH]);
+    });
+    const ly = padT+plotH+16;
+    xlabels += rotateLabels
+      ? `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="end" font-size="11" fill="#64748b" transform="rotate(-45 ${cx.toFixed(1)} ${ly})">${d.label}</text>`
+      : `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="11" fill="#64748b">${d.label}</text>`;
+  });
+  let linesSvg='';
+  opts.lines.forEach((ln,li)=>{
+    const pts = linePts[li];
+    linesSvg += `<polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${ln.color}" stroke-width="2.5"/>`;
+    linesSvg += pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${ln.color}"/>`).join('');
+  });
+
+  let grid='';
+  for(let t=0;t<=4;t++){
+    const y = padT + plotH - (plotH/4)*t;
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="#eef1f5" stroke-width="1"/>`;
+    grid += `<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#64748b">${(minV+range/4*t).toFixed(opts.decimals||0)}</text>`;
+  }
+  const legend = opts.lines.map(ln=>
+    `<span><span style="display:inline-block;width:10px;height:10px;background:${ln.color};border-radius:50%;margin-right:5px;"></span>${ln.label}</span>`
+  ).join('\n    ');
+
+  const marker = `<line class="hover-marker" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" opacity="0"/>`;
+  wrap.innerHTML = `
+    <div class="chart-scroll" style="overflow-x:auto;">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${linesSvg}${xlabels}${marker}</svg>
+    </div>
+    <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
+
+  const series = opts.lines.map(ln=>({label:ln.label, color:ln.color, key:ln.field, fmt:v=>v.toLocaleString('ko-KR',{maximumFractionDigits:opts.decimals||0})}));
+  attachChartTooltip(wrap, {data, padL, slot, series});
+}
+
 /* ---- 거래금액 추이 (거래두수 포함) ---- */
 function computeAmtTrendData(gran){
   const buckets = {};
@@ -1544,40 +1645,156 @@ function renderDeductTrend(){
     '<tr><td>자조금외</td>' + data.map(d=>`<td>${d.levy.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
 }
 
+/* ---- 공제 발생율(건수 기준, %) 추이 ---- */
+function computeDeductRateTrendData(gran){
+  const buckets = {};
+  filteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, heads:0, wcutCnt:0, fcutCnt:0, etcCnt:0};
+    const b = buckets[key];
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      b.heads++;
+      if(r[8]) b.wcutCnt++;
+      if(r[9]) b.fcutCnt++;
+      if(r[10]) b.etcCnt++;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>{
+    const b = buckets[k];
+    return {
+      label: periodLabel(k, gran),
+      wcutRate: b.heads>0 ? Math.round(b.wcutCnt/b.heads*1000)/10 : 0,
+      fcutRate: b.heads>0 ? Math.round(b.fcutCnt/b.heads*1000)/10 : 0,
+      etcRate: b.heads>0 ? Math.round(b.etcCnt/b.heads*1000)/10 : 0
+    };
+  });
+}
+function renderDeductRateTrend(){
+  const gran = granState.deductRate;
+  const data = computeDeductRateTrendData(gran);
+  renderMultiLineChart('stDeductRateChart', data, {gran, decimals:1, lines:[
+    {field:'wcutRate', color:'#1a5fb4', label:'중량공제 발생율(%)'},
+    {field:'fcutRate', color:'#f5870a', label:'등지방공제 발생율(%)'},
+    {field:'etcRate', color:'#16a34a', label:'화농·이상육공제 발생율(%)'}
+  ]});
+  document.getElementById('stDeductRateTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('stDeductRateTblBody').innerHTML =
+    '<tr><td>중량공제 발생율(%)</td>' + data.map(d=>`<td>${d.wcutRate.toFixed(1)}</td>`).join('') + '</tr>' +
+    '<tr><td>등지방공제 발생율(%)</td>' + data.map(d=>`<td>${d.fcutRate.toFixed(1)}</td>`).join('') + '</tr>' +
+    '<tr><td>화농·이상육공제 발생율(%)</td>' + data.map(d=>`<td>${d.etcRate.toFixed(1)}</td>`).join('') + '</tr>';
+}
+
+/* ---- 성별(암/수/거세) 비중 및 등급 분포 비교 ---- */
+function renderSexGradeStat(s){
+  const sexes = ['암','수','거세'];
+  const totalHeads = s.totalHeads;
+  const rows = sexes.map(sex=>{
+    const g = s.gradeCounts[sex];
+    const heads = g['1+']+g['1']+g['2']+g['등외'];
+    const abRate = heads>0 ? (g['1+']+g['1'])/heads*100 : 0;
+    return {sex, heads, g, abRate};
+  });
+  document.getElementById('stSexBars').innerHTML = rows.map(r=>
+    statBarRow(r.sex, r.heads, totalHeads||1, '--blue', `${r.heads.toLocaleString('ko-KR')}두 (${(totalHeads>0?r.heads/totalHeads*100:0).toFixed(1)}%)`)
+  ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
+  document.getElementById('stSexTblBody').innerHTML = rows.map(r=>
+    `<tr><td>${r.sex}</td><td>${r.heads.toLocaleString('ko-KR')}두</td><td>${(totalHeads>0?r.heads/totalHeads*100:0).toFixed(1)}%</td><td>${r.g['1+']}두</td><td>${r.g['1']}두</td><td>${r.g['2']}두</td><td>${r.g['등외']}두</td><td>${r.abRate.toFixed(2)}%</td></tr>`
+  ).join('');
+}
+
 function resetStatsFilter(){
   document.getElementById('statsFrom').value = '';
   document.getElementById('statsTo').value = '';
   document.getElementById('statsFarmFilter').value = '';
   renderStats();
 }
-function renderStats(){
-  const from = document.getElementById('statsFrom')?.value || '';
-  const to = document.getElementById('statsTo')?.value || '';
-  const farmName = document.getElementById('statsFarmFilter')?.value || '';
-  const s = computeAllStats(from, to, farmName);
+function derivedKpis(s){
   const totalGrade = {'1+':0,'1':0,'2':0,'등외':0};
   ['암','수','거세'].forEach(sex=>{
     Object.keys(totalGrade).forEach(g=>{ totalGrade[g] += s.gradeCounts[sex][g]; });
   });
   const abCnt = totalGrade['1+'] + totalGrade['1'];
+  return {
+    avgPrice: s.totalW>0 ? s.priceWeighted/s.totalW : 0,
+    avgPriceCarc: s.totalCarc>0 ? s.priceWeighted/s.totalCarc : 0,
+    avgYield: s.totalW>0 ? s.totalCarc/s.totalW*100 : 0,
+    avgRate: s.totalW>0 ? s.rateWeighted/s.totalW : 0,
+    abRate: s.totalHeads>0 ? abCnt/s.totalHeads*100 : 0
+  };
+}
+function addDays(dateStr, delta){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function dayDiff(a, b){
+  return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000);
+}
+function deltaBadge(curr, prev, isPct){
+  if(!prev){
+    if(!curr) return {text:'-', cls:'flat'};
+    return {text:'▲ 신규 발생 (직전기간 0)', cls:'up'};
+  }
+  const diff = curr - prev;
+  if(Math.abs(diff) < (isPct?0.005:0.5)) return {text:'- 직전기간과 동일', cls:'flat'};
+  const arrow = diff>0 ? '▲' : '▼';
+  const cls = diff>0 ? 'up' : 'down';
+  const text = isPct
+    ? `${arrow} ${Math.abs(diff).toFixed(2)}%p (직전기간 대비)`
+    : `${arrow} ${Math.abs(diff/prev*100).toFixed(1)}% (직전기간 대비)`;
+  return {text, cls};
+}
+function renderKpiDeltas(from, to, farmName, s, dk){
+  const map = {
+    stTotalCntDelta:['totalCnt', false], stTotalQtyDelta:['totalQty', false], stTotalAmtDelta:['totalAmt', false],
+    stAvgPriceDelta:['avgPrice', false], stAvgPriceCarcDelta:['avgPriceCarc', false],
+    stAvgYieldDelta:['avgYield', true], stAvgRateDelta:['avgRate', true], stAbRateDelta:['abRate', true]
+  };
+  if(!from || !to){
+    Object.keys(map).forEach(id=>{ setText(id, '기간 지정 시 증감률 표시'); document.getElementById(id).className='d flat'; });
+    return;
+  }
+  const spanDays = dayDiff(from, to) + 1;
+  const prevTo = addDays(from, -1);
+  const prevFrom = addDays(prevTo, -(spanDays-1));
+  const p = computeAllStats(prevFrom, prevTo, farmName);
+  const dp = derivedKpis(p);
+  const curr = {totalCnt:s.totalCnt, totalQty:s.totalQty, totalAmt:s.totalAmt, ...dk};
+  const prevVals = {totalCnt:p.totalCnt, totalQty:p.totalQty, totalAmt:p.totalAmt, ...dp};
+  Object.entries(map).forEach(([id, [key, isPct]])=>{
+    const b = deltaBadge(curr[key], prevVals[key], isPct);
+    setText(id, b.text);
+    document.getElementById(id).className = 'd '+b.cls;
+  });
+}
+function renderStats(){
+  const from = document.getElementById('statsFrom')?.value || '';
+  const to = document.getElementById('statsTo')?.value || '';
+  const farmName = document.getElementById('statsFarmFilter')?.value || '';
+  const s = computeAllStats(from, to, farmName);
+  const dk = derivedKpis(s);
 
   setText('stTotalCnt', s.totalCnt.toLocaleString('ko-KR')+'건');
   setText('stTotalQty', s.totalQty.toLocaleString('ko-KR')+'두');
   setText('stTotalAmt', won(s.totalAmt));
   setText('stFarmCnt', farmListSeed.length.toLocaleString('ko-KR')+'개소');
-  setText('stAvgPrice', s.totalW>0 ? Math.round(s.priceWeighted/s.totalW).toLocaleString('ko-KR')+' 원/kg' : '-');
-  setText('stAvgPriceCarc', s.totalCarc>0 ? Math.round(s.priceWeighted/s.totalCarc).toLocaleString('ko-KR')+' 원/kg' : '-');
-  setText('stAvgYield', s.totalW>0 ? (s.totalCarc/s.totalW*100).toFixed(2)+' %' : '-');
-  setText('stAvgRate', s.totalW>0 ? (s.rateWeighted/s.totalW).toFixed(2)+' %' : '-');
-  setText('stAbRate', s.totalHeads>0 ? (abCnt/s.totalHeads*100).toFixed(2)+' %' : '-');
+  setText('stAvgPrice', s.totalW>0 ? Math.round(dk.avgPrice).toLocaleString('ko-KR')+' 원/kg' : '-');
+  setText('stAvgPriceCarc', s.totalCarc>0 ? Math.round(dk.avgPriceCarc).toLocaleString('ko-KR')+' 원/kg' : '-');
+  setText('stAvgYield', s.totalW>0 ? dk.avgYield.toFixed(2)+' %' : '-');
+  setText('stAvgRate', s.totalW>0 ? dk.avgRate.toFixed(2)+' %' : '-');
+  setText('stAbRate', s.totalHeads>0 ? dk.abRate.toFixed(2)+' %' : '-');
+  renderKpiDeltas(from, to, farmName, s, dk);
 
   statsFarmAggCache = s.farmAgg;
   renderFarmRank();
+  renderSexGradeStat(s);
 
   renderAmtTrend();
   renderPriceTrend();
   renderGradeTrend();
   renderDeductTrend();
+  renderDeductRateTrend();
 }
 
 function exportTableExcel(tableId, filename){
