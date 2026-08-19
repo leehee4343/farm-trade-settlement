@@ -534,6 +534,9 @@ table.sel tbody tr:hover{background:#f7fbfe;}
 
       <div class="card">
         <div class="row">
+          <select id="statsFarmFilter" style="min-width:160px;">
+            <option value="">전체 농가</option>
+          </select>
           <label class="lb" style="display:inline;min-width:0;">거래일</label>
           <input type="date" id="statsFrom" style="max-width:160px;">
           <span style="color:var(--sub);">~</span>
@@ -975,11 +978,15 @@ function genSlipNo(dateStr){
   slipSeq += 1;
   return `TRD-${dateStr.replace(/-/g,'')}-${String(slipSeq).padStart(4,'0')}`;
 }
-function populateHistoryFarmFilter(){
-  const sel = document.getElementById('historyFarmFilter');
+function populateFarmFilter(selectId){
+  const sel = document.getElementById(selectId);
   if(!sel) return;
   const names = [...new Set(farmListSeed.map(f=>f.name))];
   sel.innerHTML = '<option value="">전체 농가</option>' + names.map(n=>`<option value="${n}">${n}</option>`).join('');
+}
+function populateHistoryFarmFilter(){
+  populateFarmFilter('historyFarmFilter');
+  populateFarmFilter('statsFarmFilter');
 }
 function renderHistory(){
   const farmVal = document.getElementById('historyFarmFilter')?.value || '';
@@ -1011,9 +1018,10 @@ function buildFarmDataFromHistory(h){
   return genFarm(h.name, h.herd, h.qty, 119, seed);
 }
 /* ===================== 통계 ===================== */
-function computeAllStats(from, to){
+function computeAllStats(from, to, farmName){
   const rows = historySeed.filter(h=>{
     if(h.status!=='확정') return false;
+    if(farmName && h.name!==farmName) return false;
     if(from && h.date<from) return false;
     if(to && h.date>to) return false;
     return true;
@@ -1064,12 +1072,14 @@ function statBarRow(label, val, total, colorVar){
 function resetStatsFilter(){
   document.getElementById('statsFrom').value = '';
   document.getElementById('statsTo').value = '';
+  document.getElementById('statsFarmFilter').value = '';
   renderStats();
 }
 function renderStats(){
   const from = document.getElementById('statsFrom')?.value || '';
   const to = document.getElementById('statsTo')?.value || '';
-  const s = computeAllStats(from, to);
+  const farmName = document.getElementById('statsFarmFilter')?.value || '';
+  const s = computeAllStats(from, to, farmName);
   const totalGrade = {'1+':0,'1':0,'2':0,'등외':0};
   ['암','수','거세'].forEach(sex=>{
     Object.keys(totalGrade).forEach(g=>{ totalGrade[g] += s.gradeCounts[sex][g]; });
