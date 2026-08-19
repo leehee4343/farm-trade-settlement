@@ -530,7 +530,18 @@ table.sel tbody tr:hover{background:#f7fbfe;}
   <div class="page" id="statsPage">
     <div class="wrap">
       <h2 class="pg-title">통계</h2>
-      <p class="pg-sub">전체 거래내역을 기반으로 집계한 거래실적, 품질(등급), 공제 통계입니다.</p>
+      <p class="pg-sub">확정된 거래내역을 기간(거래일) 기준으로 집계한 거래실적, 품질(등급), 공제 통계입니다.</p>
+
+      <div class="card">
+        <div class="row">
+          <label class="lb" style="display:inline;min-width:0;">거래일</label>
+          <input type="date" id="statsFrom" style="max-width:160px;">
+          <span style="color:var(--sub);">~</span>
+          <input type="date" id="statsTo" style="max-width:160px;">
+          <button class="btn btn-pri" onclick="renderStats()">조회</button>
+          <button class="btn btn-line" onclick="resetStatsFilter()">전체기간</button>
+        </div>
+      </div>
 
       <div class="kpi-row">
         <div class="kpi-card"><div class="l">총 거래건수</div><div class="v" id="stTotalCnt">-</div></div>
@@ -541,11 +552,6 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="stAvgYield">-</div></div>
         <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="stAvgRate">-</div></div>
         <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="stAbRate">-</div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-h"><div class="card-t"><span class="dot"></span>거래 상태 현황</div></div>
-        <div id="stStatusBars"></div>
       </div>
 
       <div class="card">
@@ -1005,20 +1011,24 @@ function buildFarmDataFromHistory(h){
   return genFarm(h.name, h.herd, h.qty, 119, seed);
 }
 /* ===================== 통계 ===================== */
-function computeAllStats(){
+function computeAllStats(from, to){
+  const rows = historySeed.filter(h=>{
+    if(h.status!=='확정') return false;
+    if(from && h.date<from) return false;
+    if(to && h.date>to) return false;
+    return true;
+  });
   const s = {
-    totalCnt: historySeed.length, totalQty:0, totalAmt:0,
-    confirmedCnt:0, waitingCnt:0,
+    totalCnt: rows.length, totalQty:0, totalAmt:0,
     totalW:0, totalCarc:0, totalFat:0, totalHeads:0,
     gradeCounts:{'암':{'1+':0,'1':0,'2':0,'등외':0},'수':{'1+':0,'1':0,'2':0,'등외':0},'거세':{'1+':0,'1':0,'2':0,'등외':0}},
     wcutSum:0, wcutCnt:0, fcutSum:0, fcutCnt:0, etcSum:0, etcCnt:0, levySum:0,
     priceWeighted:0, rateWeighted:0,
     farmAgg:{}
   };
-  historySeed.forEach(h=>{
+  rows.forEach(h=>{
     s.totalQty += h.qty;
     s.totalAmt += h.amt;
-    if(h.status==='확정') s.confirmedCnt++; else s.waitingCnt++;
 
     if(!s.farmAgg[h.name]) s.farmAgg[h.name] = {name:h.name, cnt:0, qty:0, amt:0};
     const fa = s.farmAgg[h.name];
@@ -1051,8 +1061,15 @@ function statBarRow(label, val, total, colorVar){
   </div>`;
 }
 
+function resetStatsFilter(){
+  document.getElementById('statsFrom').value = '';
+  document.getElementById('statsTo').value = '';
+  renderStats();
+}
 function renderStats(){
-  const s = computeAllStats();
+  const from = document.getElementById('statsFrom')?.value || '';
+  const to = document.getElementById('statsTo')?.value || '';
+  const s = computeAllStats(from, to);
   const totalGrade = {'1+':0,'1':0,'2':0,'등외':0};
   ['암','수','거세'].forEach(sex=>{
     Object.keys(totalGrade).forEach(g=>{ totalGrade[g] += s.gradeCounts[sex][g]; });
@@ -1067,10 +1084,6 @@ function renderStats(){
   setText('stAvgYield', s.totalW>0 ? (s.totalCarc/s.totalW*100).toFixed(2)+' %' : '-');
   setText('stAvgRate', s.totalW>0 ? (s.rateWeighted/s.totalW).toFixed(2)+' %' : '-');
   setText('stAbRate', s.totalHeads>0 ? (abCnt/s.totalHeads*100).toFixed(2)+' %' : '-');
-
-  document.getElementById('stStatusBars').innerHTML =
-    statBarRow('확정', s.confirmedCnt, s.totalCnt, '--green') +
-    statBarRow('대기', s.waitingCnt, s.totalCnt, '--amber');
 
   let gradeBody = '';
   ['암','수','거세'].forEach(sex=>{
