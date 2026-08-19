@@ -629,6 +629,12 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       <div class="card">
         <div class="card-h">
           <div class="card-t"><span class="dot"></span>농가별 실적 순위</div>
+          <div class="seg-group" id="farmRankMetricGroup">
+            <button class="seg-btn on" onclick="setFarmRankMetric('amt',this)">거래금액</button>
+            <button class="seg-btn" onclick="setFarmRankMetric('qty',this)">거래두수</button>
+            <button class="seg-btn" onclick="setFarmRankMetric('cnt',this)">거래건수</button>
+            <button class="seg-btn" onclick="setFarmRankMetric('ab',this)">AB출현율</button>
+          </div>
         </div>
         <div id="stFarmRankBars"></div>
         <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
@@ -636,7 +642,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         </div>
         <div class="tblx">
         <table class="sel" id="stFarmRankTbl">
-          <thead><tr><th>순위</th><th>농가명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th></tr></thead>
+          <thead><tr><th>순위</th><th>농가명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
           <tbody id="stFarmRankBody"></tbody>
         </table>
         </div>
@@ -1145,7 +1151,7 @@ function computeAllStats(from, to, farmName){
     s.totalQty += h.qty;
     s.totalAmt += h.amt;
 
-    if(!s.farmAgg[h.name]) s.farmAgg[h.name] = {name:h.name, cnt:0, qty:0, amt:0};
+    if(!s.farmAgg[h.name]) s.farmAgg[h.name] = {name:h.name, cnt:0, qty:0, amt:0, heads:0, grades:{'1+':0,'1':0,'2':0,'등외':0}};
     const fa = s.farmAgg[h.name];
     fa.cnt += 1; fa.qty += h.qty; fa.amt += h.amt;
 
@@ -1156,6 +1162,7 @@ function computeAllStats(from, to, farmName){
       const g = s.gradeCounts[sex] ? sex : '거세';
       const gk = s.gradeCounts[g][grade]!==undefined ? grade : '등외';
       s.gradeCounts[g][gk] += 1;
+      fa.heads++; fa.grades[gk] += 1;
       if(wcut){ s.wcutSum+=wcut; s.wcutCnt++; }
       if(fcut){ s.fcutSum+=fcut; s.fcutCnt++; }
       if(etc){ s.etcSum+=etc; s.etcCnt++; }
@@ -1163,6 +1170,9 @@ function computeAllStats(from, to, farmName){
       s.priceWeighted += (farm.unitPrice||0) * w;
       s.rateWeighted += (farm.payRate||0) * w;
     });
+  });
+  Object.values(s.farmAgg).forEach(fa=>{
+    fa.abRate = fa.heads>0 ? (fa.grades['1+']+fa.grades['1'])/fa.heads*100 : 0;
   });
   return s;
 }
@@ -1180,6 +1190,32 @@ function statBarRow(label, val, total, colorVar, valueText){
 /* ---- 거래금액/평균단가 추이 (월·주·일) ---- */
 /* ---- 기간(월/주/일) 공통 유틸 ---- */
 const granState = {amt:'month', price:'month', grade:'month', deduct:'month'};
+
+let statsFarmAggCache = {};
+let farmRankMetric = 'amt';
+const FARM_RANK_META = {
+  amt: {field:'amt', label:'거래금액', color:'--blue', fmt:v=>won(v)},
+  qty: {field:'qty', label:'거래두수', color:'--amber', fmt:v=>v.toLocaleString('ko-KR')+'두'},
+  cnt: {field:'cnt', label:'거래건수', color:'--green', fmt:v=>v.toLocaleString('ko-KR')+'건'},
+  ab: {field:'abRate', label:'AB출현율', color:'--red', fmt:v=>v.toFixed(2)+'%'}
+};
+function setFarmRankMetric(metric, el){
+  farmRankMetric = metric;
+  document.querySelectorAll('#farmRankMetricGroup .seg-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  renderFarmRank();
+}
+function renderFarmRank(){
+  const meta = FARM_RANK_META[farmRankMetric];
+  const ranked = Object.values(statsFarmAggCache).sort((a,b)=>b[meta.field]-a[meta.field]);
+  document.getElementById('stFarmRankBody').innerHTML = ranked.map((f,i)=>`
+    <tr><td>${i+1}</td><td>${f.name}</td><td>${f.cnt}건</td><td>${f.qty.toLocaleString('ko-KR')}두</td><td>${won(f.amt)}</td><td>${f.qty>0?won(f.amt/f.qty):'-'}</td>
+    <td>${f.grades['1+']}두</td><td>${f.grades['1']}두</td><td>${f.grades['2']}두</td><td>${f.grades['등외']}두</td><td>${f.abRate.toFixed(2)}%</td></tr>`).join('');
+  const maxVal = ranked.length ? Math.max(...ranked.map(f=>f[meta.field]), 1) : 1;
+  document.getElementById('stFarmRankBars').innerHTML = ranked.map(f=>
+    statBarRow(f.name, f[meta.field], maxVal, meta.color, meta.fmt(f[meta.field]))
+  ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
+}
 const GRAN_GROUP_ID = {amt:'amtGran', price:'priceGran', grade:'gradeGranGroup', deduct:'deductGranGroup'};
 const GRAN_RENDER_FN = {amt:()=>renderAmtTrend(), price:()=>renderPriceTrend(), grade:()=>renderGradeTrend(), deduct:()=>renderDeductTrend()};
 function setGranularity(kind, gran, el){
@@ -1485,13 +1521,8 @@ function renderStats(){
   setText('stAvgRate', s.totalW>0 ? (s.rateWeighted/s.totalW).toFixed(2)+' %' : '-');
   setText('stAbRate', s.totalHeads>0 ? (abCnt/s.totalHeads*100).toFixed(2)+' %' : '-');
 
-  const ranked = Object.values(s.farmAgg).sort((a,b)=>b.amt-a.amt);
-  document.getElementById('stFarmRankBody').innerHTML = ranked.map((f,i)=>`
-    <tr><td>${i+1}</td><td>${f.name}</td><td>${f.cnt}건</td><td>${f.qty.toLocaleString('ko-KR')}두</td><td>${won(f.amt)}</td><td>${f.qty>0?won(f.amt/f.qty):'-'}</td></tr>`).join('');
-  const maxFarmAmt = ranked.length ? Math.max(...ranked.map(f=>f.amt), 1) : 1;
-  document.getElementById('stFarmRankBars').innerHTML = ranked.map(f=>
-    statBarRow(f.name, f.amt, maxFarmAmt, '--blue', won(f.amt))
-  ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
+  statsFarmAggCache = s.farmAgg;
+  renderFarmRank();
 
   renderAmtTrend();
   renderPriceTrend();
