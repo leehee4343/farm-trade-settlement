@@ -108,8 +108,8 @@ select{cursor:pointer;}
 .sum-cell .v{font-size:16px;font-weight:800;color:var(--navy);margin-top:3px;}
 
 .mini-tbl{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px;}
-.mini-tbl th{background:#eaf1fa;color:var(--navy);padding:8px 6px;font-weight:800;font-size:13px;border-bottom:1px solid var(--line);}
-.mini-tbl td{padding:8px 6px;text-align:center;border-bottom:1px solid #eef1f5;}
+.mini-tbl th{background:#eaf1fa;color:var(--navy);padding:8px 6px;font-weight:800;font-size:13px;border-bottom:1px solid var(--line);white-space:nowrap;}
+.mini-tbl td{padding:8px 6px;text-align:center;border-bottom:1px solid #eef1f5;white-space:nowrap;}
 .mini-tbl tr:last-child td{background:var(--blue-lt);}
 
 /* detail table */
@@ -140,8 +140,8 @@ table.dt tfoot td{padding:8px 6px;text-align:center;background:var(--blue-lt);co
 .modal-b{padding:16px 20px;}
 .notice{background:#fff8e8;border:1px solid rgba(217,151,24,.24);border-left:4px solid var(--amber);color:#8a6200;border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;}
 table.sel{width:100%;border-collapse:collapse;font-size:13px;}
-table.sel th{background:#eaf1fa;color:var(--navy);padding:8px 6px;font-weight:800;font-size:13px;text-align:center;border-bottom:1px solid var(--line);}
-table.sel td{padding:8px 6px;text-align:center;border-bottom:1px solid #eef1f5;}
+table.sel th{background:#eaf1fa;color:var(--navy);padding:8px 6px;font-weight:800;font-size:13px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;}
+table.sel td{padding:8px 6px;text-align:center;border-bottom:1px solid #eef1f5;white-space:nowrap;}
 .slip-link{color:var(--blue);font-weight:400;text-decoration:none;cursor:pointer;}
 .slip-link:hover{text-decoration:underline;}
 table.sel tbody tr:hover{background:#f7fbfe;}
@@ -1205,16 +1205,21 @@ function renderBarLineChart(containerId, data, opts){
   const plotH = H-padT-padB;
   const barVals = data.map(d=>d[opts.barField]);
   const maxBar = Math.max(...barVals, 1) * 1.15;
-  let lineVals=[], minLine=0, maxLine=1, lineRange=1;
+  let lineVals=[], lineVals2=[], minLine=0, maxLine=1, lineRange=1;
   if(opts.lineField){
     lineVals = data.map(d=>d[opts.lineField]);
-    minLine = Math.min(...lineVals) * 0.95;
-    maxLine = Math.max(...lineVals, minLine+1) * 1.05;
+    let allLineVals = lineVals;
+    if(opts.lineField2){
+      lineVals2 = data.map(d=>d[opts.lineField2]);
+      allLineVals = lineVals.concat(lineVals2);
+    }
+    minLine = Math.min(...allLineVals) * 0.95;
+    maxLine = Math.max(...allLineVals, minLine+1) * 1.05;
     lineRange = (maxLine-minLine) || 1;
   }
   const barW = Math.min(slot*0.5, 40);
 
-  let bars='', xlabels='', pts=[];
+  let bars='', xlabels='', pts=[], pts2=[];
   data.forEach((d,i)=>{
     const cx = padL + slot*i + slot/2;
     const bh = (barVals[i]/maxBar)*plotH;
@@ -1222,16 +1227,24 @@ function renderBarLineChart(containerId, data, opts){
     if(opts.lineField){
       const py = padT + plotH - ((lineVals[i]-minLine)/lineRange)*plotH;
       pts.push([cx,py]);
+      if(opts.lineField2){
+        const py2 = padT + plotH - ((lineVals2[i]-minLine)/lineRange)*plotH;
+        pts2.push([cx,py2]);
+      }
     }
     const ly = padT+plotH+16;
     xlabels += rotateLabels
       ? `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="end" font-size="11" fill="#64748b" transform="rotate(-45 ${cx.toFixed(1)} ${ly})">${d.label}</text>`
       : `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="11" fill="#64748b">${d.label}</text>`;
   });
-  let line='', dots='';
+  let line='', dots='', line2='', dots2='';
   if(opts.lineField){
     line = `<polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${opts.lineColor}" stroke-width="2.5"/>`;
     dots = pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${opts.lineColor}"/>`).join('');
+    if(opts.lineField2){
+      line2 = `<polyline points="${pts2.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${opts.lineColor2}" stroke-width="2.5" stroke-dasharray="5,3"/>`;
+      dots2 = pts2.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${opts.lineColor2}"/>`).join('');
+    }
   }
   let grid='';
   for(let t=0;t<=4;t++){
@@ -1244,42 +1257,50 @@ function renderBarLineChart(containerId, data, opts){
   }
   let legend = `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.barColor};border-radius:2px;margin-right:5px;"></span>${opts.barLabel}</span>`;
   if(opts.lineField) legend += `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel}</span>`;
+  if(opts.lineField2) legend += `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor2};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel2}</span>`;
 
   wrap.innerHTML = `
     <div style="overflow-x:auto;">
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${bars}${line}${dots}${xlabels}</svg>
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${bars}${line}${dots}${line2}${dots2}${xlabels}</svg>
     </div>
-    <div style="display:flex;gap:18px;justify-content:center;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
+    <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
 }
 
-/* ---- 거래금액 및 평균 kg당가격 추이 ---- */
+/* ---- 거래금액 및 평균 kg당가격 추이 (생체중/지육중 기준 모두) ---- */
 function computeTrendData(gran){
   const buckets = {};
   filteredConfirmedRows().forEach(h=>{
     const key = periodKey(h.date, gran);
-    if(!buckets[key]) buckets[key] = {key, amt:0, priceWeighted:0, weight:0};
+    if(!buckets[key]) buckets[key] = {key, amt:0, priceWeighted:0, weight:0, carcWeight:0};
     buckets[key].amt += h.amt;
     const farm = buildFarmDataFromHistory(h);
     farm.detail.forEach(r=>{
-      const w = r[3];
+      const w = r[3], carc = r[4];
       buckets[key].weight += w;
+      buckets[key].carcWeight += carc;
       buckets[key].priceWeighted += (farm.unitPrice||0) * w;
     });
   });
   return Object.keys(buckets).sort().map(k=>({
     label: periodLabel(k, gran),
     amtWan: Math.round(buckets[k].amt/10000),
-    price: buckets[k].weight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].weight) : 0
+    price: buckets[k].weight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].weight) : 0,
+    priceCarc: buckets[k].carcWeight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].carcWeight) : 0
   }));
 }
 function renderTrendChart(){
   const gran = granState.trend;
   const data = computeTrendData(gran);
-  renderBarLineChart('trendChart', data, {gran, barField:'amtWan', barColor:'#1a5fb4', barLabel:'거래금액(만원)', lineField:'price', lineColor:'#f5870a', lineLabel:'평균 kg당가격(원)'});
+  renderBarLineChart('trendChart', data, {
+    gran, barField:'amtWan', barColor:'#1a5fb4', barLabel:'거래금액(만원)',
+    lineField:'price', lineColor:'#f5870a', lineLabel:'평균 kg당가격 - 생체중 기준(원)',
+    lineField2:'priceCarc', lineColor2:'#16a34a', lineLabel2:'평균 kg당가격 - 지육중 기준(원)'
+  });
   document.getElementById('trendTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
   document.getElementById('trendTblBody').innerHTML =
     '<tr><td>거래금액(만원)</td>' + data.map(d=>`<td>${d.amtWan.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
-    '<tr><td>평균 kg당가격(원)</td>' + data.map(d=>`<td>${d.price.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+    '<tr><td>평균 kg당가격 - 생체중 기준(원)</td>' + data.map(d=>`<td>${d.price.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>평균 kg당가격 - 지육중 기준(원)</td>' + data.map(d=>`<td>${d.priceCarc.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
 }
 
 /* ---- 등급판정 분포 추이 ---- */
