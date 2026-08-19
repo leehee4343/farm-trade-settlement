@@ -52,6 +52,13 @@ body{margin:0;font-family:"맑은 고딕","Malgun Gothic","Apple SD Gothic Neo",
 .b-gr{background:var(--green-lt);color:var(--green-dk);}
 .b-rd{background:var(--red-lt);color:var(--red-dk);}
 
+.ab-help{cursor:help;}
+.ab-help-pop{position:fixed;z-index:999;background:#1e293b;color:#fff;font-size:13px;line-height:1.6;padding:14px 16px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:300px;display:none;}
+.ab-help-pop .t{font-weight:800;margin-bottom:6px;}
+.ab-help-pop .f{background:rgba(255,255,255,.12);border-radius:6px;padding:8px 10px;font-size:12px;margin-top:8px;line-height:1.5;}
+.ab-help-pop .x{text-align:right;margin-top:8px;}
+.ab-help-pop .x button{background:none;border:none;color:#93c5fd;font-size:12px;cursor:pointer;padding:0;}
+
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 label.lb{font-size:13px;color:var(--sub);font-weight:700;min-width:70px;}
 input[type=date],input[type=text],input[type=number],select{
@@ -299,7 +306,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       </div>
 
       <div class="card">
-        <div class="card-h"><div class="card-t"><span class="dot"></span>등급판정</div><span class="badge b-gr" id="abRate">AB출현율 -</span></div>
+        <div class="card-h"><div class="card-t"><span class="dot"></span>등급판정</div><span class="badge b-gr ab-help" id="abRate" oncontextmenu="showAbHelp(event)">AB출현율 -</span></div>
         <table class="mini-tbl">
           <thead><tr><th>성별</th><th>1+</th><th>1</th><th>2</th><th>등외</th><th>계</th><th>비율</th></tr></thead>
           <tbody id="gradeBody"></tbody>
@@ -567,7 +574,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         <div class="kpi-card"><div class="l">평균 kg당 단가 (지육중 기준)</div><div class="v" id="stAvgPriceCarc">-</div><div class="d" id="stAvgPriceCarcDelta"></div></div>
         <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="stAvgYield">-</div><div class="d" id="stAvgYieldDelta"></div></div>
         <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="stAvgRate">-</div><div class="d" id="stAvgRateDelta"></div></div>
-        <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="stAbRate">-</div><div class="d" id="stAbRateDelta"></div></div>
+        <div class="kpi-card"><div class="l ab-help" oncontextmenu="showAbHelp(event)">AB출현율</div><div class="v" id="stAbRate">-</div><div class="d" id="stAbRateDelta"></div></div>
       </div>
 
       <div class="card">
@@ -643,7 +650,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         </div>
         <div class="tblx">
         <table class="sel" id="stSexTbl">
-          <thead><tr><th>성별</th><th>두수</th><th>비중(%)</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
+          <thead><tr><th>성별</th><th>두수</th><th>비중(%)</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th class="ab-help" oncontextmenu="showAbHelp(event)">AB출현율(%)</th></tr></thead>
           <tbody id="stSexTblBody"></tbody>
         </table>
         </div>
@@ -656,7 +663,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
             <button class="seg-btn on" onclick="setFarmRankMetric('amt',this)">거래금액</button>
             <button class="seg-btn" onclick="setFarmRankMetric('qty',this)">거래두수</button>
             <button class="seg-btn" onclick="setFarmRankMetric('cnt',this)">거래건수</button>
-            <button class="seg-btn" onclick="setFarmRankMetric('ab',this)">AB출현율</button>
+            <button class="seg-btn ab-help" onclick="setFarmRankMetric('ab',this)" oncontextmenu="showAbHelp(event)">AB출현율</button>
           </div>
         </div>
         <div id="stFarmRankBars"></div>
@@ -665,7 +672,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         </div>
         <div class="tblx">
         <table class="sel" id="stFarmRankTbl">
-          <thead><tr><th>순위</th><th>농가명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
+          <thead><tr><th>순위</th><th>농가명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th class="ab-help" oncontextmenu="showAbHelp(event)">AB출현율(%)</th></tr></thead>
           <tbody id="stFarmRankBody"></tbody>
         </table>
         </div>
@@ -744,7 +751,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         <div class="kpi-card"><div class="l">평균 kg당 단가 (지육중 기준)</div><div class="v" id="admAvgPriceCarc">-</div><div class="d" id="admAvgPriceCarcDelta"></div></div>
         <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="admAvgYield">-</div><div class="d" id="admAvgYieldDelta"></div></div>
         <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="admAvgRate">-</div><div class="d" id="admAvgRateDelta"></div></div>
-        <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="admAbRate">-</div><div class="d" id="admAbRateDelta"></div></div>
+        <div class="kpi-card"><div class="l ab-help" oncontextmenu="showAbHelp(event)">AB출현율</div><div class="v" id="admAbRate">-</div><div class="d" id="admAbRateDelta"></div></div>
       </div>
 
       <div class="card">
@@ -820,7 +827,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         </div>
         <div class="tblx">
         <table class="sel" id="admSexTbl">
-          <thead><tr><th>성별</th><th>두수</th><th>비중(%)</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
+          <thead><tr><th>성별</th><th>두수</th><th>비중(%)</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th class="ab-help" oncontextmenu="showAbHelp(event)">AB출현율(%)</th></tr></thead>
           <tbody id="admSexTblBody"></tbody>
         </table>
         </div>
@@ -833,7 +840,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
             <button class="seg-btn on" onclick="setCompanyRankMetric('amt',this)">거래금액</button>
             <button class="seg-btn" onclick="setCompanyRankMetric('qty',this)">거래두수</button>
             <button class="seg-btn" onclick="setCompanyRankMetric('cnt',this)">거래건수</button>
-            <button class="seg-btn" onclick="setCompanyRankMetric('ab',this)">AB출현율</button>
+            <button class="seg-btn ab-help" onclick="setCompanyRankMetric('ab',this)" oncontextmenu="showAbHelp(event)">AB출현율</button>
           </div>
         </div>
         <div id="admCompanyRankBars"></div>
@@ -842,7 +849,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         </div>
         <div class="tblx">
         <table class="sel" id="admCompanyRankTbl">
-          <thead><tr><th>순위</th><th>업체명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
+          <thead><tr><th>순위</th><th>업체명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th class="ab-help" oncontextmenu="showAbHelp(event)">AB출현율(%)</th></tr></thead>
           <tbody id="admCompanyRankBody"></tbody>
         </table>
         </div>
@@ -1040,6 +1047,35 @@ function updateStatementMode(){
 }
 const won = n => Math.round(n).toLocaleString('ko-KR')+' 원';
 
+/* ===================== 'AB출현율' 우클릭 설명 팝오버 ===================== */
+function showAbHelp(e){
+  e.preventDefault();
+  let pop = document.getElementById('abHelpPop');
+  if(!pop){
+    pop = document.createElement('div');
+    pop.id = 'abHelpPop';
+    pop.className = 'ab-help-pop';
+    document.body.appendChild(pop);
+  }
+  pop.innerHTML = `
+    <div class="t">AB출현율(%)이란?</div>
+    <div>1+등급과 1등급(합쳐서 'AB등급'이라 부르는 상위 두 등급)을 받은 두수가 전체 판정두수에서 차지하는 비율입니다.</div>
+    <div class="f">AB출현율(%) = (1+등급 두수 + 1등급 두수)<br>÷ 전체 판정두수 × 100</div>
+    <div class="x"><button onclick="hideAbHelp()">닫기</button></div>`;
+  pop.style.display = 'block';
+  const maxLeft = window.innerWidth - 316;
+  const maxTop = window.innerHeight - 180;
+  pop.style.left = Math.max(8, Math.min(e.clientX, maxLeft)) + 'px';
+  pop.style.top = Math.max(8, Math.min(e.clientY, maxTop)) + 'px';
+}
+function hideAbHelp(){
+  const pop = document.getElementById('abHelpPop');
+  if(pop) pop.style.display = 'none';
+}
+document.addEventListener('click', hideAbHelp);
+document.addEventListener('scroll', hideAbHelp, true);
+function abAttr(label){ return label && label.indexOf('AB출현율')>=0 ? ' class="ab-help" oncontextmenu="showAbHelp(event)"' : ''; }
+
 /* ===================== 네비게이션 (URL 해시 라우팅) ===================== */
 const PAGE_MAP={statement:'statementPage', history:'historyPage', farm:'farmPage', deduct:'deductPage', stats:'statsPage', adminStats:'adminStatsPage'};
 const NAV_ID={statement:'nvHistory', history:'nvHistory', farm:'nvFarm', deduct:'nvFarm', stats:'nvStats', adminStats:'nvAdminStats'};
@@ -1073,9 +1109,34 @@ function closeSide(){
 }
 
 /* ===================== 거래 모달 ===================== */
+// TRADE_DB에 없는 날짜라도 항상 거래 건이 조회되도록, 날짜 기반 시드로 가짜 거래 건을 만들어 채워넣는다
+function ensureTradeDbForDate(date){
+  if(TRADE_DB[date]) return TRADE_DB[date];
+  let s = 0;
+  for(let i=0;i<date.length;i++) s = (s*31 + date.charCodeAt(i)) % 233280;
+  if(s<=0) s += 100000;
+  const rnd = ()=>{ s = (s*9301+49297)%233280; return s/233280; };
+  const pool = [...HIST_FARM_POOL];
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(rnd()*(i+1));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  const farmCount = 3 + Math.floor(rnd()*4);
+  const list = pool.slice(0, farmCount).map((f,i)=>{
+    const qty = 8 + Math.floor(rnd()*48);
+    const baseW = 108 + rnd()*24;
+    const unitPrice = 5600 + Math.floor(rnd()*1000);
+    const payRate = Math.round((73 + rnd()*6)*10)/10;
+    const farmSeed = Math.floor(rnd()*90000)+1000;
+    return {idx:i+1, herdNo:f.herd, qty, name:f.name, farm:genFarm(f.name, f.herd, qty, baseW, farmSeed, unitPrice, payRate)};
+  });
+  TRADE_DB[date] = list;
+  return list;
+}
 function openTradeModal(){
   const date = document.getElementById('tradeDate').value;
-  const list = TRADE_DB[date] || [];
+  if(!date){ toast('거래일을 먼저 선택해주세요.'); return; }
+  const list = ensureTradeDbForDate(date);
   document.getElementById('modalDate').textContent = formatKDate(date);
   document.getElementById('modalCount').textContent = list.length;
   const tb = document.getElementById('tradeListBody');
@@ -1685,8 +1746,8 @@ function renderBarLineChart(containerId, data, opts){
     }
   }
   let legend = `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.barColor};border-radius:2px;margin-right:5px;"></span>${opts.barLabel}</span>`;
-  if(opts.lineField) legend += `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel}</span>`;
-  if(opts.lineField2) legend += `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor2};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel2}</span>`;
+  if(opts.lineField) legend += `<span${abAttr(opts.lineLabel)}><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel}</span>`;
+  if(opts.lineField2) legend += `<span${abAttr(opts.lineLabel2)}><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor2};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel2}</span>`;
 
   const marker = `<line class="hover-marker" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" opacity="0"/>`;
   wrap.innerHTML = `
@@ -1902,7 +1963,7 @@ function renderGradeTrend(){
   document.getElementById('stGradeTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
   document.getElementById('stGradeTblBody').innerHTML =
     '<tr><td>개체수(두)</td>' + data.map(d=>`<td>${d.total.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
-    '<tr><td>AB출현율(%)</td>' + data.map(d=>`<td>${d.abRate}</td>`).join('') + '</tr>';
+    '<tr><td class="ab-help" oncontextmenu="showAbHelp(event)">AB출현율(%)</td>' + data.map(d=>`<td>${d.abRate}</td>`).join('') + '</tr>';
 }
 
 /* ---- 공제 항목별 발생 현황 추이 ---- */
@@ -2055,7 +2116,7 @@ function renderGradeTrendAdmin(){
   document.getElementById('admGradeTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
   document.getElementById('admGradeTblBody').innerHTML =
     '<tr><td>개체수(두)</td>' + data.map(d=>`<td>${d.total.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
-    '<tr><td>AB출현율(%)</td>' + data.map(d=>`<td>${d.abRate}</td>`).join('') + '</tr>';
+    '<tr><td class="ab-help" oncontextmenu="showAbHelp(event)">AB출현율(%)</td>' + data.map(d=>`<td>${d.abRate}</td>`).join('') + '</tr>';
 }
 
 function computeDeductTrendDataAdmin(gran){
