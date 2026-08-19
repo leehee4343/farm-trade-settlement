@@ -241,6 +241,9 @@ table.sel tbody tr:hover{background:#f7fbfe;}
     <div class="nv" id="nvStats" onclick="showPage('stats',this)">
       <div class="nv-ic">📊</div><div>통계(업체용)</div>
     </div>
+    <div class="nv" id="nvAdminStats" onclick="showPage('adminStats',this)">
+      <div class="nv-ic">🏢</div><div>통계(관리자용)</div>
+    </div>
   </aside>
 
   <main class="main" id="mainArea">
@@ -712,6 +715,183 @@ table.sel tbody tr:hover{background:#f7fbfe;}
     </div>
   </div>
 
+  <!-- ============ PAGE 6 : 통계(관리자용) ============ -->
+  <div class="page" id="adminStatsPage">
+    <div class="wrap">
+      <h2 class="pg-title">통계(관리자용)</h2>
+      <p class="pg-sub">전체 식육포장처리업체를 대상으로, 업체를 선택하거나 전체현황을 기간(거래일) 기준으로 집계한 통계입니다.</p>
+
+      <div class="card">
+        <div class="row">
+          <select id="adminStatsCompany" style="min-width:160px;">
+            <option value="">전체 업체</option>
+          </select>
+          <label class="lb" style="display:inline;min-width:0;">거래일</label>
+          <input type="date" id="adminStatsFrom" style="max-width:160px;">
+          <span style="color:var(--sub);">~</span>
+          <input type="date" id="adminStatsTo" style="max-width:160px;">
+          <button class="btn btn-pri" onclick="renderAdminStats()">조회</button>
+          <button class="btn btn-line" onclick="resetAdminStatsFilter()">전체기간</button>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="l">총 거래건수</div><div class="v" id="admTotalCnt">-</div><div class="d" id="admTotalCntDelta"></div></div>
+        <div class="kpi-card"><div class="l">총 거래두수</div><div class="v" id="admTotalQty">-</div><div class="d" id="admTotalQtyDelta"></div></div>
+        <div class="kpi-card"><div class="l">총 차인지급액</div><div class="v" id="admTotalAmt">-</div><div class="d" id="admTotalAmtDelta"></div></div>
+        <div class="kpi-card"><div class="l">참여 업체 수</div><div class="v" id="admCompanyCnt">-</div></div>
+        <div class="kpi-card"><div class="l">평균 kg당 단가 (생체중 기준)</div><div class="v" id="admAvgPrice">-</div><div class="d" id="admAvgPriceDelta"></div></div>
+        <div class="kpi-card"><div class="l">평균 kg당 단가 (지육중 기준)</div><div class="v" id="admAvgPriceCarc">-</div><div class="d" id="admAvgPriceCarcDelta"></div></div>
+        <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="admAvgYield">-</div><div class="d" id="admAvgYieldDelta"></div></div>
+        <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="admAvgRate">-</div><div class="d" id="admAvgRateDelta"></div></div>
+        <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="admAbRate">-</div><div class="d" id="admAbRateDelta"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>거래금액 추이</div>
+          <div class="seg-group" id="admAmtGran">
+            <button class="seg-btn on" onclick="setGranularityAdmin('amt','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('amt','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('amt','day',this)">일</button>
+          </div>
+        </div>
+        <div id="admAmtChart"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('admAmtTbl','거래금액_추이_관리자.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="admAmtTbl">
+          <thead><tr id="admAmtTblHead"><th>구분</th></tr></thead>
+          <tbody id="admAmtTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>평균 kg당가격 추이 (생체중 기준, 지육중 기준)</div>
+          <div class="seg-group" id="admPriceGran">
+            <button class="seg-btn on" onclick="setGranularityAdmin('price','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('price','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('price','day',this)">일</button>
+          </div>
+        </div>
+        <div id="admPriceChart"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('admPriceTbl','평균단가_추이_관리자.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="admPriceTbl">
+          <thead><tr id="admPriceTblHead"><th>구분</th></tr></thead>
+          <tbody id="admPriceTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>등급판정 분포 (전체 개체 기준)</div>
+          <div class="seg-group" id="admGradeGranGroup">
+            <button class="seg-btn on" onclick="setGranularityAdmin('grade','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('grade','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('grade','day',this)">일</button>
+          </div>
+        </div>
+        <div id="admGradeBars"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('admGradeTbl','등급판정_분포_관리자.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="admGradeTbl">
+          <thead><tr id="admGradeTblHead"><th>구분</th></tr></thead>
+          <tbody id="admGradeTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>성별(암/수/거세) 비중 및 등급 분포 비교</div>
+        </div>
+        <div id="admSexBars"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('admSexTbl','성별_비중_등급분포_관리자.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="admSexTbl">
+          <thead><tr><th>성별</th><th>두수</th><th>비중(%)</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
+          <tbody id="admSexTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>업체별 실적 순위 (전체현황)</div>
+          <div class="seg-group" id="companyRankMetricGroup">
+            <button class="seg-btn on" onclick="setCompanyRankMetric('amt',this)">거래금액</button>
+            <button class="seg-btn" onclick="setCompanyRankMetric('qty',this)">거래두수</button>
+            <button class="seg-btn" onclick="setCompanyRankMetric('cnt',this)">거래건수</button>
+            <button class="seg-btn" onclick="setCompanyRankMetric('ab',this)">AB출현율</button>
+          </div>
+        </div>
+        <div id="admCompanyRankBars"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('admCompanyRankTbl','업체별_실적순위.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="admCompanyRankTbl">
+          <thead><tr><th>순위</th><th>업체명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th><th>1+등급</th><th>1등급</th><th>2등급</th><th>등외</th><th>AB출현율(%)</th></tr></thead>
+          <tbody id="admCompanyRankBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>공제 항목별 발생 현황</div>
+          <div class="seg-group" id="admDeductGranGroup">
+            <button class="seg-btn on" onclick="setGranularityAdmin('deduct','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('deduct','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('deduct','day',this)">일</button>
+          </div>
+        </div>
+        <div id="admDeductBars"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('admDeductTbl','공제항목별_현황_관리자.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="admDeductTbl">
+          <thead><tr id="admDeductTblHead"><th>공제 항목</th></tr></thead>
+          <tbody id="admDeductTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>공제 발생율 (건수 기준, %)</div>
+          <div class="seg-group" id="admDeductRateGranGroup">
+            <button class="seg-btn on" onclick="setGranularityAdmin('deductRate','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('deductRate','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularityAdmin('deductRate','day',this)">일</button>
+          </div>
+        </div>
+        <div id="admDeductRateChart"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('admDeductRateTbl','공제발생율_관리자.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="admDeductRateTbl">
+          <thead><tr id="admDeductRateTblHead"><th>구분</th></tr></thead>
+          <tbody id="admDeductRateTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </main>
 </div>
 
@@ -861,8 +1041,8 @@ function updateStatementMode(){
 const won = n => Math.round(n).toLocaleString('ko-KR')+' 원';
 
 /* ===================== 네비게이션 (URL 해시 라우팅) ===================== */
-const PAGE_MAP={statement:'statementPage', history:'historyPage', farm:'farmPage', deduct:'deductPage', stats:'statsPage'};
-const NAV_ID={statement:'nvHistory', history:'nvHistory', farm:'nvFarm', deduct:'nvFarm', stats:'nvStats'};
+const PAGE_MAP={statement:'statementPage', history:'historyPage', farm:'farmPage', deduct:'deductPage', stats:'statsPage', adminStats:'adminStatsPage'};
+const NAV_ID={statement:'nvHistory', history:'nvHistory', farm:'nvFarm', deduct:'nvFarm', stats:'nvStats', adminStats:'nvAdminStats'};
 
 function showPage(name, el){
   if(!PAGE_MAP[name]) name='history';
@@ -875,6 +1055,7 @@ function showPage(name, el){
   closeSide();
   if(location.hash !== '#'+name) location.hash = name;
   if(name==='stats') renderStats();
+  if(name==='adminStats') renderAdminStats();
 }
 
 window.addEventListener('hashchange', ()=>{
@@ -1125,6 +1306,20 @@ function generateHistorySeed(count, seed){
 }
 let historySeed = generateHistorySeed(550, 20260101);
 let slipSeq = historySeed.length;
+
+/* ===================== 통계(관리자용) 모의 데이터 : 업체별 거래내역 ===================== */
+const ADMIN_COMPANY_POOL = ['A업체','B업체','C업체','D업체','E업체'];
+function generateAdminHistorySeed(){
+  let all = [];
+  ADMIN_COMPANY_POOL.forEach((company, i)=>{
+    const rows = generateHistorySeed(120 + i*15, 20270101 + i*911);
+    rows.forEach(r=>{ r.company = company; r.no = `${company}-${r.no}`; });
+    all = all.concat(rows);
+  });
+  all.sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0);
+  return all;
+}
+let adminHistorySeed = generateAdminHistorySeed();
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function nowStr(){
   const d = new Date();
@@ -1221,6 +1416,65 @@ function computeAllStats(from, to, farmName){
   return s;
 }
 
+/* ---- 통계(관리자용) : 업체 단위 집계 ---- */
+function computeAllStatsAdmin(from, to, company){
+  const rows = adminHistorySeed.filter(h=>{
+    if(h.status!=='확정') return false;
+    if(company && h.company!==company) return false;
+    if(from && h.date<from) return false;
+    if(to && h.date>to) return false;
+    return true;
+  });
+  const s = {
+    totalCnt: rows.length, totalQty:0, totalAmt:0,
+    totalW:0, totalCarc:0, totalFat:0, totalHeads:0,
+    gradeCounts:{'암':{'1+':0,'1':0,'2':0,'등외':0},'수':{'1+':0,'1':0,'2':0,'등외':0},'거세':{'1+':0,'1':0,'2':0,'등외':0}},
+    wcutSum:0, wcutCnt:0, fcutSum:0, fcutCnt:0, etcSum:0, etcCnt:0, levySum:0,
+    priceWeighted:0, rateWeighted:0,
+    companyAgg:{}
+  };
+  rows.forEach(h=>{
+    s.totalQty += h.qty;
+    s.totalAmt += h.amt;
+
+    if(!s.companyAgg[h.company]) s.companyAgg[h.company] = {name:h.company, cnt:0, qty:0, amt:0, heads:0, grades:{'1+':0,'1':0,'2':0,'등외':0}};
+    const ca = s.companyAgg[h.company];
+    ca.cnt += 1; ca.qty += h.qty; ca.amt += h.amt;
+
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      const [no, herd, sex, w, carc, fat, grade, base, wcut, fcut, etc, levy] = r;
+      s.totalW += w; s.totalCarc += carc; s.totalFat += fat; s.totalHeads++;
+      const g = s.gradeCounts[sex] ? sex : '거세';
+      const gk = s.gradeCounts[g][grade]!==undefined ? grade : '등외';
+      s.gradeCounts[g][gk] += 1;
+      ca.heads++; ca.grades[gk] += 1;
+      if(wcut){ s.wcutSum+=wcut; s.wcutCnt++; }
+      if(fcut){ s.fcutSum+=fcut; s.fcutCnt++; }
+      if(etc){ s.etcSum+=etc; s.etcCnt++; }
+      s.levySum += levy||0;
+      s.priceWeighted += (farm.unitPrice||0) * w;
+      s.rateWeighted += (farm.payRate||0) * w;
+    });
+  });
+  Object.values(s.companyAgg).forEach(ca=>{
+    ca.abRate = ca.heads>0 ? (ca.grades['1+']+ca.grades['1'])/ca.heads*100 : 0;
+  });
+  return s;
+}
+function adminFilteredConfirmedRows(){
+  const from = document.getElementById('adminStatsFrom')?.value || '';
+  const to = document.getElementById('adminStatsTo')?.value || '';
+  const company = document.getElementById('adminStatsCompany')?.value || '';
+  return adminHistorySeed.filter(h=>{
+    if(h.status!=='확정') return false;
+    if(company && h.company!==company) return false;
+    if(from && h.date<from) return false;
+    if(to && h.date>to) return false;
+    return true;
+  });
+}
+
 function statBarRow(label, val, total, colorVar, valueText){
   const pct = total>0 ? (val/total*100) : 0;
   const text = valueText!==undefined ? valueText : `${val.toLocaleString('ko-KR')}건 (${pct.toFixed(1)}%)`;
@@ -1260,6 +1514,28 @@ function renderFarmRank(){
     statBarRow(f.name, f[meta.field], maxVal, meta.color, meta.fmt(f[meta.field]))
   ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
 }
+
+/* ---- 통계(관리자용) : 업체별 실적 순위 (농가별 실적 순위와 동일한 지표/구성) ---- */
+let statsCompanyAggCache = {};
+let companyRankMetric = 'amt';
+function setCompanyRankMetric(metric, el){
+  companyRankMetric = metric;
+  document.querySelectorAll('#companyRankMetricGroup .seg-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  renderCompanyRank();
+}
+function renderCompanyRank(){
+  const meta = FARM_RANK_META[companyRankMetric];
+  const ranked = Object.values(statsCompanyAggCache).sort((a,b)=>b[meta.field]-a[meta.field]);
+  document.getElementById('admCompanyRankBody').innerHTML = ranked.map((f,i)=>`
+    <tr><td>${i+1}</td><td>${f.name}</td><td>${f.cnt}건</td><td>${f.qty.toLocaleString('ko-KR')}두</td><td>${won(f.amt)}</td><td>${f.qty>0?won(f.amt/f.qty):'-'}</td>
+    <td>${f.grades['1+']}두</td><td>${f.grades['1']}두</td><td>${f.grades['2']}두</td><td>${f.grades['등외']}두</td><td>${f.abRate.toFixed(2)}%</td></tr>`).join('');
+  const maxVal = ranked.length ? Math.max(...ranked.map(f=>f[meta.field]), 1) : 1;
+  document.getElementById('admCompanyRankBars').innerHTML = ranked.map(f=>
+    statBarRow(f.name, f[meta.field], maxVal, meta.color, meta.fmt(f[meta.field]))
+  ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
+}
+
 const GRAN_GROUP_ID = {amt:'amtGran', price:'priceGran', grade:'gradeGranGroup', deduct:'deductGranGroup', deductRate:'deductRateGranGroup'};
 const GRAN_RENDER_FN = {amt:()=>renderAmtTrend(), price:()=>renderPriceTrend(), grade:()=>renderGradeTrend(), deduct:()=>renderDeductTrend(), deductRate:()=>renderDeductRateTrend()};
 function setGranularity(kind, gran, el){
@@ -1268,6 +1544,18 @@ function setGranularity(kind, gran, el){
   document.querySelectorAll('#'+groupId+' .seg-btn').forEach(b=>b.classList.remove('on'));
   if(el) el.classList.add('on');
   GRAN_RENDER_FN[kind]();
+}
+
+/* ---- 통계(관리자용) : 월/주/일 구분 상태 ---- */
+const adminGranState = {amt:'month', price:'month', grade:'month', deduct:'month', deductRate:'month'};
+const ADMIN_GRAN_GROUP_ID = {amt:'admAmtGran', price:'admPriceGran', grade:'admGradeGranGroup', deduct:'admDeductGranGroup', deductRate:'admDeductRateGranGroup'};
+const ADMIN_GRAN_RENDER_FN = {amt:()=>renderAmtTrendAdmin(), price:()=>renderPriceTrendAdmin(), grade:()=>renderGradeTrendAdmin(), deduct:()=>renderDeductTrendAdmin(), deductRate:()=>renderDeductRateTrendAdmin()};
+function setGranularityAdmin(kind, gran, el){
+  adminGranState[kind] = gran;
+  const groupId = ADMIN_GRAN_GROUP_ID[kind];
+  document.querySelectorAll('#'+groupId+' .seg-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  ADMIN_GRAN_RENDER_FN[kind]();
 }
 function periodKey(dateStr, gran){
   if(gran==='day') return dateStr;
@@ -1688,8 +1976,160 @@ function renderDeductRateTrend(){
     '<tr><td>화농·이상육공제 발생율(%)</td>' + data.map(d=>`<td>${d.etcRate.toFixed(1)}</td>`).join('') + '</tr>';
 }
 
-/* ---- 성별(암/수/거세) 비중 및 등급 분포 비교 ---- */
-function renderSexGradeStat(s){
+/* ================ 통계(관리자용) : 거래금액/평균단가/등급판정/공제 추이 (업체 단위) ================ */
+function computeAmtTrendDataAdmin(gran){
+  const buckets = {};
+  adminFilteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, amt:0, qty:0};
+    buckets[key].amt += h.amt;
+    buckets[key].qty += h.qty;
+  });
+  return Object.keys(buckets).sort().map(k=>({
+    label: periodLabel(k, gran),
+    amtWan: Math.round(buckets[k].amt/10000),
+    qty: buckets[k].qty
+  }));
+}
+function renderAmtTrendAdmin(){
+  const gran = adminGranState.amt;
+  const data = computeAmtTrendDataAdmin(gran);
+  renderBarLineChart('admAmtChart', data, {gran, barField:'amtWan', barColor:'#1a5fb4', barLabel:'거래금액(만원)', lineField:'qty', lineColor:'#f5870a', lineLabel:'거래두수(두)'});
+  document.getElementById('admAmtTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('admAmtTblBody').innerHTML =
+    '<tr><td>거래금액(만원)</td>' + data.map(d=>`<td>${d.amtWan.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>거래두수(두)</td>' + data.map(d=>`<td>${d.qty.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+}
+
+function computePriceTrendDataAdmin(gran){
+  const buckets = {};
+  adminFilteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, priceWeighted:0, weight:0, carcWeight:0};
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      const w = r[3], carc = r[4];
+      buckets[key].weight += w;
+      buckets[key].carcWeight += carc;
+      buckets[key].priceWeighted += (farm.unitPrice||0) * w;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>({
+    label: periodLabel(k, gran),
+    price: buckets[k].weight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].weight) : 0,
+    priceCarc: buckets[k].carcWeight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].carcWeight) : 0
+  }));
+}
+function renderPriceTrendAdmin(){
+  const gran = adminGranState.price;
+  const data = computePriceTrendDataAdmin(gran);
+  renderDualLineChart('admPriceChart', data, {gran, field1:'price', color1:'#f5870a', label1:'생체중 기준(원/kg)', field2:'priceCarc', color2:'#16a34a', label2:'지육중 기준(원/kg)'});
+  document.getElementById('admPriceTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('admPriceTblBody').innerHTML =
+    '<tr><td>생체중 기준(원/kg)</td>' + data.map(d=>`<td>${d.price.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>지육중 기준(원/kg)</td>' + data.map(d=>`<td>${d.priceCarc.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+}
+
+function computeGradeTrendDataAdmin(gran){
+  const buckets = {};
+  adminFilteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, total:0, ab:0};
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      const grade = r[6];
+      buckets[key].total += 1;
+      if(grade==='1+'||grade==='1') buckets[key].ab += 1;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>({
+    label: periodLabel(k, gran),
+    total: buckets[k].total,
+    abRate: buckets[k].total>0 ? +(buckets[k].ab/buckets[k].total*100).toFixed(1) : 0
+  }));
+}
+function renderGradeTrendAdmin(){
+  const gran = adminGranState.grade;
+  const data = computeGradeTrendDataAdmin(gran);
+  renderBarLineChart('admGradeBars', data, {gran, barField:'total', barColor:'#1a5fb4', barLabel:'개체수(두)', lineField:'abRate', lineColor:'#f5870a', lineLabel:'AB출현율(%)', lineDecimals:1});
+  document.getElementById('admGradeTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('admGradeTblBody').innerHTML =
+    '<tr><td>개체수(두)</td>' + data.map(d=>`<td>${d.total.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>AB출현율(%)</td>' + data.map(d=>`<td>${d.abRate}</td>`).join('') + '</tr>';
+}
+
+function computeDeductTrendDataAdmin(gran){
+  const buckets = {};
+  adminFilteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, wcut:0, fcut:0, etc:0, levy:0};
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      buckets[key].wcut += r[8]||0;
+      buckets[key].fcut += r[9]||0;
+      buckets[key].etc += r[10]||0;
+      buckets[key].levy += r[11]||0;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>{
+    const b = buckets[k];
+    return {label: periodLabel(k, gran), wcut:b.wcut, fcut:b.fcut, etc:b.etc, levy:b.levy, total:b.wcut+b.fcut+b.etc};
+  });
+}
+function renderDeductTrendAdmin(){
+  const gran = adminGranState.deduct;
+  const data = computeDeductTrendDataAdmin(gran);
+  renderBarLineChart('admDeductBars', data, {gran, barField:'total', barColor:'#f5870a', barLabel:'품질 공제액(원, 자조금외 제외)'});
+  document.getElementById('admDeductTblHead').innerHTML = '<th>공제 항목</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('admDeductTblBody').innerHTML =
+    '<tr><td>중량공제</td>' + data.map(d=>`<td>${d.wcut.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>등지방공제</td>' + data.map(d=>`<td>${d.fcut.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>기타공제</td>' + data.map(d=>`<td>${d.etc.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>자조금외</td>' + data.map(d=>`<td>${d.levy.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+}
+
+function computeDeductRateTrendDataAdmin(gran){
+  const buckets = {};
+  adminFilteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, heads:0, wcutCnt:0, fcutCnt:0, etcCnt:0};
+    const b = buckets[key];
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      b.heads++;
+      if(r[8]) b.wcutCnt++;
+      if(r[9]) b.fcutCnt++;
+      if(r[10]) b.etcCnt++;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>{
+    const b = buckets[k];
+    return {
+      label: periodLabel(k, gran),
+      wcutRate: b.heads>0 ? Math.round(b.wcutCnt/b.heads*1000)/10 : 0,
+      fcutRate: b.heads>0 ? Math.round(b.fcutCnt/b.heads*1000)/10 : 0,
+      etcRate: b.heads>0 ? Math.round(b.etcCnt/b.heads*1000)/10 : 0
+    };
+  });
+}
+function renderDeductRateTrendAdmin(){
+  const gran = adminGranState.deductRate;
+  const data = computeDeductRateTrendDataAdmin(gran);
+  renderMultiLineChart('admDeductRateChart', data, {gran, decimals:1, lines:[
+    {field:'wcutRate', color:'#1a5fb4', label:'중량공제 발생율(%)'},
+    {field:'fcutRate', color:'#f5870a', label:'등지방공제 발생율(%)'},
+    {field:'etcRate', color:'#16a34a', label:'화농·이상육공제 발생율(%)'}
+  ]});
+  document.getElementById('admDeductRateTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('admDeductRateTblBody').innerHTML =
+    '<tr><td>중량공제 발생율(%)</td>' + data.map(d=>`<td>${d.wcutRate.toFixed(1)}</td>`).join('') + '</tr>' +
+    '<tr><td>등지방공제 발생율(%)</td>' + data.map(d=>`<td>${d.fcutRate.toFixed(1)}</td>`).join('') + '</tr>' +
+    '<tr><td>화농·이상육공제 발생율(%)</td>' + data.map(d=>`<td>${d.etcRate.toFixed(1)}</td>`).join('') + '</tr>';
+}
+
+/* ---- 성별(암/수/거세) 비중 및 등급 분포 비교 (prefix로 업체용/관리자용 공용) ---- */
+function renderSexGradeStat(s, prefix){
+  prefix = prefix || 'st';
   const sexes = ['암','수','거세'];
   const totalHeads = s.totalHeads;
   const rows = sexes.map(sex=>{
@@ -1698,10 +2138,10 @@ function renderSexGradeStat(s){
     const abRate = heads>0 ? (g['1+']+g['1'])/heads*100 : 0;
     return {sex, heads, g, abRate};
   });
-  document.getElementById('stSexBars').innerHTML = rows.map(r=>
+  document.getElementById(prefix+'SexBars').innerHTML = rows.map(r=>
     statBarRow(r.sex, r.heads, totalHeads||1, '--blue', `${r.heads.toLocaleString('ko-KR')}두 (${(totalHeads>0?r.heads/totalHeads*100:0).toFixed(1)}%)`)
   ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
-  document.getElementById('stSexTblBody').innerHTML = rows.map(r=>
+  document.getElementById(prefix+'SexTblBody').innerHTML = rows.map(r=>
     `<tr><td>${r.sex}</td><td>${r.heads.toLocaleString('ko-KR')}두</td><td>${(totalHeads>0?r.heads/totalHeads*100:0).toFixed(1)}%</td><td>${r.g['1+']}두</td><td>${r.g['1']}두</td><td>${r.g['2']}두</td><td>${r.g['등외']}두</td><td>${r.abRate.toFixed(2)}%</td></tr>`
   ).join('');
 }
@@ -1798,6 +2238,65 @@ function renderStats(){
   renderGradeTrend();
   renderDeductTrend();
   renderDeductRateTrend();
+}
+
+/* ================ 통계(관리자용) ================ */
+function resetAdminStatsFilter(){
+  document.getElementById('adminStatsFrom').value = '';
+  document.getElementById('adminStatsTo').value = '';
+  document.getElementById('adminStatsCompany').value = '';
+  renderAdminStats();
+}
+function renderKpiDeltasAdmin(from, to, company, s, dk){
+  const map = {
+    admTotalCntDelta:['totalCnt', false], admTotalQtyDelta:['totalQty', false], admTotalAmtDelta:['totalAmt', false],
+    admAvgPriceDelta:['avgPrice', false], admAvgPriceCarcDelta:['avgPriceCarc', false],
+    admAvgYieldDelta:['avgYield', true], admAvgRateDelta:['avgRate', true], admAbRateDelta:['abRate', true]
+  };
+  if(!from || !to){
+    Object.keys(map).forEach(id=>{ setText(id, '기간 지정 시 증감률 표시'); document.getElementById(id).className='d flat'; });
+    return;
+  }
+  const spanDays = dayDiff(from, to) + 1;
+  const prevTo = addDays(from, -1);
+  const prevFrom = addDays(prevTo, -(spanDays-1));
+  const p = computeAllStatsAdmin(prevFrom, prevTo, company);
+  const dp = derivedKpis(p);
+  const curr = {totalCnt:s.totalCnt, totalQty:s.totalQty, totalAmt:s.totalAmt, ...dk};
+  const prevVals = {totalCnt:p.totalCnt, totalQty:p.totalQty, totalAmt:p.totalAmt, ...dp};
+  Object.entries(map).forEach(([id, [key, isPct]])=>{
+    const b = deltaBadge(curr[key], prevVals[key], isPct);
+    setText(id, b.text);
+    document.getElementById(id).className = 'd '+b.cls;
+  });
+}
+function renderAdminStats(){
+  const from = document.getElementById('adminStatsFrom')?.value || '';
+  const to = document.getElementById('adminStatsTo')?.value || '';
+  const company = document.getElementById('adminStatsCompany')?.value || '';
+  const s = computeAllStatsAdmin(from, to, company);
+  const dk = derivedKpis(s);
+
+  setText('admTotalCnt', s.totalCnt.toLocaleString('ko-KR')+'건');
+  setText('admTotalQty', s.totalQty.toLocaleString('ko-KR')+'두');
+  setText('admTotalAmt', won(s.totalAmt));
+  setText('admCompanyCnt', ADMIN_COMPANY_POOL.length.toLocaleString('ko-KR')+'개사');
+  setText('admAvgPrice', s.totalW>0 ? Math.round(dk.avgPrice).toLocaleString('ko-KR')+' 원/kg' : '-');
+  setText('admAvgPriceCarc', s.totalCarc>0 ? Math.round(dk.avgPriceCarc).toLocaleString('ko-KR')+' 원/kg' : '-');
+  setText('admAvgYield', s.totalW>0 ? dk.avgYield.toFixed(2)+' %' : '-');
+  setText('admAvgRate', s.totalW>0 ? dk.avgRate.toFixed(2)+' %' : '-');
+  setText('admAbRate', s.totalHeads>0 ? dk.abRate.toFixed(2)+' %' : '-');
+  renderKpiDeltasAdmin(from, to, company, s, dk);
+
+  statsCompanyAggCache = s.companyAgg;
+  renderCompanyRank();
+  renderSexGradeStat(s, 'adm');
+
+  renderAmtTrendAdmin();
+  renderPriceTrendAdmin();
+  renderGradeTrendAdmin();
+  renderDeductTrendAdmin();
+  renderDeductRateTrendAdmin();
 }
 
 function exportTableExcel(tableId, filename){
@@ -2066,6 +2565,11 @@ syncFarmDealCounts();
 renderFarmList();
 populateHistoryFarmFilter();
 renderHistory();
+
+(function populateAdminCompanyFilter(){
+  const sel = document.getElementById('adminStatsCompany');
+  if(sel) sel.innerHTML = '<option value="">전체 업체</option>' + ADMIN_COMPANY_POOL.map(c=>`<option value="${c}">${c}</option>`).join('');
+})();
 
 // 프로토타입 기본 노출용 : A농가(2024-07-08) 거래를 미리 불러온 상태로 시작
 curFarm = JSON.parse(JSON.stringify(farmA));
