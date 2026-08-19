@@ -242,6 +242,9 @@ table.sel tbody tr:hover{background:#f7fbfe;}
     <div class="nv" id="nvFarm" onclick="showPage('farm',this)">
       <div class="nv-ic">🏠</div><div>농장정보 관리</div>
     </div>
+    <div class="nv" id="nvStatement" onclick="newStatement()">
+      <div class="nv-ic">🧾</div><div>거래명세서 작성</div>
+    </div>
     <div class="nv on" id="nvHistory" onclick="showPage('history',this)">
       <div class="nv-ic">📂</div><div>거래내역 조회</div>
     </div>
@@ -1078,7 +1081,7 @@ function abAttr(label){ return label && label.indexOf('AB출현율')>=0 ? ' clas
 
 /* ===================== 네비게이션 (URL 해시 라우팅) ===================== */
 const PAGE_MAP={statement:'statementPage', history:'historyPage', farm:'farmPage', deduct:'deductPage', stats:'statsPage', adminStats:'adminStatsPage'};
-const NAV_ID={statement:'nvHistory', history:'nvHistory', farm:'nvFarm', deduct:'nvFarm', stats:'nvStats', adminStats:'nvAdminStats'};
+const NAV_ID={statement:'nvStatement', history:'nvHistory', farm:'nvFarm', deduct:'nvFarm', stats:'nvStats', adminStats:'nvAdminStats'};
 
 function showPage(name, el){
   if(!PAGE_MAP[name]) name='history';
