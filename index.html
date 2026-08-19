@@ -1088,7 +1088,7 @@ const HIST_FARM_POOL = [
   {name:'G농가', herd:'118701700878'}, {name:'H농가', herd:'118701700879'},
   {name:'I농가', herd:'118701700880'}, {name:'J농가', herd:'118701700881'}
 ];
-const HIST_START_DATE = new Date(2024,0,1);
+const HIST_START_DATE = new Date(2023,0,1);
 const HIST_END_DATE = new Date(2026,7,20);
 const HIST_DAY_SPAN = Math.round((HIST_END_DATE-HIST_START_DATE)/86400000) + 1;
 function offsetToDate2026(offset){
@@ -1099,7 +1099,7 @@ function offsetToDate2026(offset){
 function generateHistorySeed(count, seed){
   let s = seed;
   const rnd = ()=>{ s = (s*9301+49297)%233280; return s/233280; };
-  const DAY_SPAN = HIST_DAY_SPAN; // 2024-01-01 ~ 2026-08-20
+  const DAY_SPAN = HIST_DAY_SPAN; // 2023-01-01 ~ 2026-08-20
   const rows = [];
   for(let i=0;i<count;i++){
     const date = offsetToDate2026(Math.floor(rnd()*DAY_SPAN));
@@ -1123,7 +1123,7 @@ function generateHistorySeed(count, seed){
   });
   return rows.reverse(); // 최신 거래일이 먼저 오도록
 }
-let historySeed = generateHistorySeed(400, 20260101);
+let historySeed = generateHistorySeed(550, 20260101);
 let slipSeq = historySeed.length;
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function nowStr(){
