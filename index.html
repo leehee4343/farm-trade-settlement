@@ -1249,6 +1249,43 @@ function filteredConfirmedRows(){
 }
 
 /* ---- 공통 막대+선 그래프 (기간 스크롤형) ---- */
+/* ---- 그래프 공통 호버 툴팁 : 데이터 지점 위에 마우스를 올리면 상세값 표시 ---- */
+function attachChartTooltip(wrap, opts){
+  const scroll = wrap.querySelector('.chart-scroll');
+  const svg = scroll.querySelector('svg');
+  const marker = svg.querySelector('.hover-marker');
+  let tip = wrap.querySelector('.chart-tooltip');
+  if(!tip){
+    tip = document.createElement('div');
+    tip.className = 'chart-tooltip';
+    tip.style.cssText = 'position:absolute;pointer-events:none;background:#1e293b;color:#fff;font-size:12px;padding:8px 10px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap;z-index:30;opacity:0;line-height:1.7;';
+    wrap.appendChild(tip);
+  }
+  wrap.style.position = 'relative';
+  const move = (e)=>{
+    const rect = svg.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    let idx = Math.round((x - opts.padL - opts.slot/2) / opts.slot);
+    idx = Math.max(0, Math.min(opts.data.length-1, idx));
+    const d = opts.data[idx];
+    const cx = opts.padL + opts.slot*idx + opts.slot/2;
+    marker.setAttribute('x1', cx); marker.setAttribute('x2', cx);
+    marker.style.opacity = 1;
+    tip.innerHTML = `<div style="font-weight:600;margin-bottom:4px;">${d.label}</div>` +
+      opts.series.map(s=>`<div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${s.color};margin-right:6px;"></span>${s.label}: ${s.fmt(d[s.key])}</div>`).join('');
+    tip.style.opacity = 1;
+    const wrapRect = wrap.getBoundingClientRect();
+    let left = e.clientX - wrapRect.left + 14;
+    let top = e.clientY - wrapRect.top - 12;
+    const tipW = tip.offsetWidth || 160;
+    if(left + tipW > wrap.clientWidth) left = e.clientX - wrapRect.left - tipW - 14;
+    tip.style.left = left+'px';
+    tip.style.top = Math.max(0, top)+'px';
+  };
+  scroll.onmousemove = move;
+  scroll.onmouseleave = ()=>{ tip.style.opacity = 0; marker.style.opacity = 0; };
+}
+
 function renderBarLineChart(containerId, data, opts){
   const wrap = document.getElementById(containerId);
   if(!wrap) return;
@@ -1319,11 +1356,17 @@ function renderBarLineChart(containerId, data, opts){
   if(opts.lineField) legend += `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel}</span>`;
   if(opts.lineField2) legend += `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor2};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel2}</span>`;
 
+  const marker = `<line class="hover-marker" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" opacity="0"/>`;
   wrap.innerHTML = `
-    <div style="overflow-x:auto;">
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${bars}${line}${dots}${line2}${dots2}${xlabels}</svg>
+    <div class="chart-scroll" style="overflow-x:auto;">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${bars}${line}${dots}${line2}${dots2}${xlabels}${marker}</svg>
     </div>
     <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
+
+  const series = [{label:opts.barLabel, color:opts.barColor, key:opts.barField, fmt:v=>v.toLocaleString('ko-KR')}];
+  if(opts.lineField) series.push({label:opts.lineLabel, color:opts.lineColor, key:opts.lineField, fmt:v=>v.toLocaleString('ko-KR',{maximumFractionDigits:opts.lineDecimals||0})});
+  if(opts.lineField2) series.push({label:opts.lineLabel2, color:opts.lineColor2, key:opts.lineField2, fmt:v=>v.toLocaleString('ko-KR',{maximumFractionDigits:opts.lineDecimals||0})});
+  attachChartTooltip(wrap, {data, padL, slot, series});
 }
 
 /* ---- 두 선 그래프(공통 축) : 단위가 같은 두 지표를 겹쳐서 비교 ---- */
@@ -1372,11 +1415,18 @@ function renderDualLineChart(containerId, data, opts){
   const legend = `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.color1};border-radius:50%;margin-right:5px;"></span>${opts.label1}</span>
     <span><span style="display:inline-block;width:10px;height:10px;background:${opts.color2};border-radius:50%;margin-right:5px;"></span>${opts.label2}</span>`;
 
+  const marker = `<line class="hover-marker" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" opacity="0"/>`;
   wrap.innerHTML = `
-    <div style="overflow-x:auto;">
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${line1}${dots1}${line2}${dots2}${xlabels}</svg>
+    <div class="chart-scroll" style="overflow-x:auto;">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${line1}${dots1}${line2}${dots2}${xlabels}${marker}</svg>
     </div>
     <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
+
+  const series = [
+    {label:opts.label1, color:opts.color1, key:opts.field1, fmt:v=>v.toLocaleString('ko-KR',{maximumFractionDigits:opts.decimals||0})},
+    {label:opts.label2, color:opts.color2, key:opts.field2, fmt:v=>v.toLocaleString('ko-KR',{maximumFractionDigits:opts.decimals||0})}
+  ];
+  attachChartTooltip(wrap, {data, padL, slot, series});
 }
 
 /* ---- 거래금액 추이 (거래두수 포함) ---- */
