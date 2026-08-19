@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>농가정산 프로그램 프로토타입</title>
+<style>
+:root{
+  --blue:#1F4E78; --blue-lt:#e8f0f7; --blue-md:#5b8fb9; --blue-dk:#15324f;
+  --navy:#13283c;
+  --green:#16a34a; --green-lt:#e3f9ed; --green-md:#7fe0ac; --green-dk:#0d7a3a;
+  --amber:#f5870a; --amber-lt:#fff1e0; --amber-md:#ffb35c; --amber-dk:#c2660a;
+  --red:#ef4444; --red-lt:#fdecec; --red-md:#fca5a5; --red-dk:#c0291a;
+  --bg:#f5f7fa; --bg2:#fff; --text:#1a202c; --sub:#5b6472; --line:#e2e6ec;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"맑은 고딕","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--text);font-size:16px;}
+
+/* ===== Header ===== */
+.hdr{height:58px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.hdr-l{display:flex;align-items:center;gap:12px;}
+.hdr-logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--blue-md),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px;}
+.hdr-title{color:#fff;font-size:17px;font-weight:700;letter-spacing:.2px;}
+.hdr-sub{color:#9fb3c8;font-size:12px;margin-left:8px;}
+.hdr-r{display:flex;gap:8px;align-items:center;}
+.hdr-tag{background:#ffffff1a;color:#cfe0ef;border:1px solid #ffffff33;border-radius:20px;padding:5px 12px;font-size:12.5px;}
+
+/* ===== Layout ===== */
+.lay{display:flex;height:calc(100vh - 58px);}
+.side{width:230px;background:#fff;border-right:1px solid var(--line);padding:16px 0;flex-shrink:0;overflow-y:auto;}
+.side-lbl{font-size:11.5px;color:#9aa4b2;font-weight:700;padding:14px 18px 6px;letter-spacing:.5px;}
+.nv{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;color:var(--sub);font-size:14.5px;font-weight:600;border-left:3px solid transparent;}
+.nv:hover{background:var(--blue-lt);}
+.nv.on{background:var(--blue-lt);color:var(--blue);border-left:3px solid var(--blue);}
+.nv-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--blue-lt);color:var(--blue);flex-shrink:0;}
+.nv.on .nv-ic{background:var(--blue);color:#fff;}
+.side-div{height:1px;background:var(--line);margin:12px 18px;}
+
+.main{flex:1;overflow-y:auto;padding:0;}
+.page{display:none;}
+.page.on{display:block;}
+
+/* ===== generic ===== */
+.wrap{padding:22px 24px 60px;max-width:1500px;margin:0 auto;}
+.pg-title{font-size:20px;font-weight:800;margin:0 0 4px;color:var(--navy);}
+.pg-sub{font-size:13.5px;color:var(--sub);margin:0 0 18px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(20,30,50,.04);}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.card-t{font-size:15.5px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.card-t .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);}
+.badge{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.b-bl{background:var(--blue-lt);color:var(--blue);}
+.b-am{background:var(--amber-lt);color:var(--amber-dk);}
+.b-gr{background:var(--green-lt);color:var(--green-dk);}
+.b-rd{background:var(--red-lt);color:var(--red-dk);}
+
+/* grid layout for main settlement page */
+.grid2{display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start;}
+@media(max-width:1100px){.grid2{grid-template-columns:1fr;}}
+
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+label.lb{font-size:13px;color:var(--sub);font-weight:700;min-width:70px;}
+input[type=date],input[type=text],input[type=number]{
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;color:var(--text);background:#fbfcfe;
+}
+input[type=date]{flex:1;min-width:140px;}
+.btn{border:none;border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:700;cursor:pointer;transition:.15s;}
+.btn-pri{background:var(--blue);color:#fff;}
+.btn-pri:hover{background:var(--blue-dk);}
+.btn-acc{background:var(--amber);color:#fff;}
+.btn-acc:hover{background:var(--amber-dk);}
+.btn-line{background:#fff;border:1px solid var(--line);color:var(--sub);}
+.btn-line:hover{background:#f2f4f7;}
+.btn-ghost{background:#eef2f6;color:var(--sub);}
+.btn-sm{padding:6px 11px;font-size:12.5px;border-radius:6px;}
+
+.farm-tag{display:flex;align-items:center;gap:10px;background:var(--blue-lt);border:1px solid #cfe0ef;border-radius:10px;padding:10px 14px;margin-top:12px;font-size:14px;}
+.farm-tag b{color:var(--blue);}
+.farm-tag .empty{color:#9aa4b2;font-style:italic;}
+
+.kv-tbl{width:100%;border-collapse:collapse;margin-top:4px;}
+.kv-tbl td{padding:7px 4px;font-size:13.5px;border-bottom:1px dashed #eceff3;}
+.kv-tbl td.k{color:var(--sub);width:80px;font-weight:700;}
+.kv-tbl td.v{font-weight:800;color:var(--navy);}
+.kv-tbl input{width:100%;}
+.req{color:var(--red);font-weight:800;margin-left:2px;}
+
+.sum-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.sum-cell{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;}
+.sum-cell .l{font-size:11.5px;color:var(--sub);font-weight:700;}
+.sum-cell .v{font-size:16px;font-weight:800;color:var(--navy);margin-top:3px;}
+.sum-cell.wide{grid-column:1/3;background:linear-gradient(135deg,var(--blue),var(--blue-dk));border:none;}
+.sum-cell.wide .l{color:#cfe0ef;}
+.sum-cell.wide .v{color:#fff;font-size:22px;}
+
+.mini-tbl{width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px;}
+.mini-tbl th{background:var(--blue);color:#fff;padding:7px 4px;font-weight:700;}
+.mini-tbl td{padding:6px 4px;text-align:center;border-bottom:1px solid #eef1f5;}
+.mini-tbl tr:last-child td{font-weight:800;background:var(--blue-lt);}
+
+/* detail table */
+.tbl-wrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px;}
+table.dt{width:100%;border-collapse:collapse;font-size:13px;min-width:980px;}
+table.dt thead th{position:sticky;top:0;background:var(--blue);color:#fff;padding:9px 6px;font-weight:700;font-size:12.5px;white-space:nowrap;z-index:2;}
+table.dt tbody td{padding:7px 6px;text-align:center;border-bottom:1px solid #eef1f5;white-space:nowrap;}
+table.dt tbody tr:hover{background:#f7fafc;}
+table.dt tfoot td{padding:9px 6px;text-align:center;font-weight:800;background:var(--blue-lt);color:var(--navy);position:sticky;bottom:0;}
+.wcell input{width:64px;background:#fffbe6;border:1px solid #f0d77a;text-align:right;padding:5px 6px;border-radius:5px;font-size:12.5px;font-weight:700;color:#7a5a00;}
+.gtag{font-weight:800;padding:2px 7px;border-radius:6px;font-size:11.5px;}
+.g1p{background:var(--green-lt);color:var(--green-dk);}
+.g1{background:var(--blue-lt);color:var(--blue);}
+.g2{background:var(--amber-lt);color:var(--amber-dk);}
+.gx{background:var(--red-lt);color:var(--red-dk);}
+.sexm{color:var(--blue-md);} .sexf{color:#c2549c;} .sexc{color:var(--amber-dk);}
+
+.foot-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}
+
+/* modal */
+.ovl{position:fixed;inset:0;background:rgba(15,25,40,.55);display:none;align-items:center;justify-content:center;z-index:100;}
+.ovl.on{display:flex;}
+.modal{background:#fff;border-radius:14px;width:620px;max-width:92vw;max-height:84vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.modal-h h3{margin:0;font-size:16px;color:var(--navy);}
+.modal-x{cursor:pointer;font-size:18px;color:var(--sub);background:none;border:none;}
+.modal-b{padding:16px 20px;}
+.notice{background:var(--amber-lt);border:1px solid #ffd9a0;color:var(--amber-dk);border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;}
+table.sel{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.sel th{background:#f2f4f7;color:var(--sub);padding:8px 6px;font-weight:700;text-align:center;}
+table.sel td{padding:9px 6px;text-align:center;border-bottom:1px solid #eef1f5;}
+.pick-btn{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+.pick-btn:hover{background:var(--blue-dk);}
+.pick-btn[disabled]{background:#cfd6dd;cursor:not-allowed;}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:13px 22px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:200;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* settings page */
+.set-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+@media(max-width:980px){.set-grid{grid-template-columns:1fr;}}
+.opt-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #eceff3;font-size:13.5px;}
+.opt-row:last-child{border-bottom:none;}
+.opt-l{color:var(--text);font-weight:600;}
+.opt-d{font-size:12px;color:var(--sub);margin-top:2px;}
+.switch{position:relative;width:40px;height:22px;background:#d4d9e0;border-radius:20px;cursor:pointer;flex-shrink:0;}
+.switch.on{background:var(--green);}
+.switch i{position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:.18s;}
+.switch.on i{left:20px;}
+.tier{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:6px;}
+.tier input{width:70px;}
+
+.flow{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;}
+.fstep{flex:0 0 150px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;position:relative;}
+.fstep .n{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+.fstep .t{font-size:12.5px;font-weight:700;color:var(--navy);}
+.fstep .d{font-size:11px;color:var(--sub);margin-top:4px;}
+.farrow{align-self:center;color:var(--blue-md);font-weight:900;font-size:16px;flex:0 0 14px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-logo">농</div>
+    <div>
+      <span class="hdr-title">농가정산 프로그램</span>
+      <span class="hdr-sub">식육포장처리업체 ↔ 농가 거래정산 시스템 (Prototype)</span>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <span class="hdr-tag">돼지 등급판정 시스템 연동</span>
+    <span class="hdr-tag">v0.9 Prototype</span>
+  </div>
+</div>
+
+<div class="lay">
+  <aside class="side">
+    <div class="side-lbl">업무</div>
+    <div class="nv on" id="nvSettle" onclick="showPage('settle',this)">
+      <div class="nv-ic">💳</div><div>정산관리</div>
+    </div>
+    <div class="nv" id="nvHistory" onclick="showPage('history',this)">
+      <div class="nv-ic">📂</div><div>정산내역 조회</div>
+    </div>
+    <div class="side-div"></div>
+    <div class="side-lbl">설정</div>
+    <div class="nv" id="nvFarm" onclick="showPage('farm',this)">
+      <div class="nv-ic">🏠</div><div>농장정보 관리</div>
+    </div>
+    <div class="nv" id="nvDeduct" onclick="showPage('deduct',this)">
+      <div class="nv-ic">⚙️</div><div>공제/지급율 설정</div>
+    </div>
+    <div class="side-div"></div>
+    <div class="side-lbl">참고</div>
+    <div class="nv" id="nvFlow" onclick="showPage('flow',this)">
+      <div class="nv-ic">🔗</div><div>연동 구조도</div>
+    </div>
+  </aside>
+
+  <main class="main" id="mainArea">
+
+  <!-- ============ PAGE 1 : 정산관리 (메인 화면, PDF p.2 재현) ============ -->
+  <div class="page on" id="settlePage">
+    <div class="wrap">
+      <h2 class="pg-title">농가거래 정산관리</h2>
+      <p class="pg-sub">거래일을 선택해 돼지 등급판정 시스템과 연동된 거래 건을 불러오고, 생돈 개체별 내역을 확인하여 정산을 확정합니다.</p>
+
+      <div class="grid2">
+        <!-- LEFT : 거래선택 + 정산요약 -->
+        <div>
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t"><span class="dot"></span>거래일 선택</div>
+              <span class="badge b-bl">돼지 등급판정 시스템 연동</span>
+            </div>
+            <div class="row">
+              <input type="date" id="tradeDate" value="2024-07-08">
+              <button class="btn btn-pri" onclick="openTradeModal()">거래 찾기</button>
+            </div>
+            <div class="farm-tag" id="farmTag">
+              <span>농가 / 이력번호 :</span>
+              <span class="empty" id="farmTagVal">선택된 거래가 없습니다</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">
+              <div class="card-t"><span class="dot"></span>생돈정산요약</div>
+              <span class="badge b-am">별도 입력 필요</span>
+            </div>
+            <table class="kv-tbl">
+              <tr><td class="k">생체중계<span class="req">*</span></td><td class="v" id="sumWeight">- kg</td></tr>
+              <tr><td class="k">적용단가<span class="req">*</span></td><td class="v"><input type="number" id="unitPrice" value="6057" oninput="recalc()" style="width:110px;text-align:right;"> 원/kg</td></tr>
+              <tr><td class="k">지급율<span class="req">*</span></td><td class="v"><input type="number" id="payRate" value="76" oninput="recalc()" style="width:80px;text-align:right;"> %</td></tr>
+            </table>
+            <div class="row" style="margin-top:8px;justify-content:flex-end;">
+              <button class="btn btn-acc" onclick="recalc(true)">계산하기</button>
+            </div>
+
+            <div class="sum-box">
+              <div class="sum-cell"><div class="l">정산액</div><div class="v" id="sumSettle">0 원</div></div>
+              <div class="sum-cell"><div class="l">장려금</div><div class="v" id="sumBonus">0 원</div></div>
+              <div class="sum-cell"><div class="l">공제액(합)</div><div class="v" id="sumDeduct">0 원</div></div>
+              <div class="sum-cell"><div class="l">자조금외</div><div class="v" id="sumLevy">0 원</div></div>
+              <div class="sum-cell wide"><div class="l">차인지급액 (정산액+장려금-공제액-자조금외)</div><div class="v" id="sumFinal">0 원</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><div class="card-t"><span class="dot"></span>평균정보</div></div>
+            <table class="kv-tbl">
+              <tr><td class="k">생체중</td><td class="v" id="avgWeight">-</td></tr>
+              <tr><td class="k">지육중</td><td class="v" id="avgCarc">-</td></tr>
+              <tr><td class="k">지육율</td><td class="v" id="avgYield">-</td></tr>
+              <tr><td class="k">등지방</td><td class="v" id="avgFat">-</td></tr>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><div class="card-t"><span class="dot"></span>등급판정</div><span class="badge b-gr" id="abRate">AB출현율 -</span></div>
+            <table class="mini-tbl" id="gradeTbl">
+              <thead><tr><th>성별</th><th>1+</th><th>1</th><th>2</th><th>등외</th><th>계</th><th>비율</th></tr></thead>
+              <tbody id="gradeBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT : 개체별 내역 -->
+        <div class="card" style="min-height:560px;">
+          <div class="card-h">
+            <div class="card-t"><span class="dot"></span>생돈개체별 내역</div>
+            <span class="badge b-bl" id="herdNoTag">이력번호 : -</span>
+          </div>
+          <div class="tbl-wrap">
+            <table class="dt">
+              <thead>
+                <tr>
+                  <th>번호</th><th>지육번호</th><th>성별</th>
+                  <th>생체중(kg)</th><th>지육중</th><th>등지방</th><th>등급</th>
+                  <th>기본금액</th><th>장려금</th><th>중량공제</th><th>등지방공제</th><th>기타공제</th><th>자조금외</th>
+                </tr>
+              </thead>
+              <tbody id="detailBody">
+                <tr><td colspan="13" style="padding:40px;color:#9aa4b2;">상단에서 거래 건을 선택하면 개체별 내역이 표시됩니다.</td></tr>
+              </tbody>
+              <tfoot id="detailFoot" style="display:none;">
+                <tr>
+                  <td colspan="3">합계 / 평균</td>
+                  <td id="ftWeight">-</td><td id="ftCarc">-</td><td id="ftFat">-</td><td>-</td>
+                  <td id="ftBase">-</td><td id="ftBonus">-</td><td id="ftW">-</td><td id="ftF">-</td><td id="ftEtc">-</td><td id="ftLevy">-</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p style="font-size:12px;color:var(--amber-dk);margin:10px 2px 0;">※ 노란색 생체중 셀은 직접 수정 가능하며, 수정 시 기본금액(생체중×적용단가×지급율)이 자동 재계산됩니다.</p>
+
+          <div class="foot-actions">
+            <button class="btn btn-line" onclick="resetSettle()">취소</button>
+            <button class="btn btn-pri" id="confirmBtn" onclick="confirmSettle()">정산완료(확정)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 2 : 정산내역 조회 ============ -->
+  <div class="page" id="historyPage">
+    <div class="wrap">
+      <h2 class="pg-title">정산내역 조회</h2>
+      <p class="pg-sub">확정된 정산 건의 검색/조회, 다운로드, 인쇄 기능을 제공합니다. (확정 시 '돼지거래가격 조사시스템'으로 데이터가 전송됩니다)</p>
+      <div class="card">
+        <div class="row" style="margin-bottom:14px;">
+          <input type="text" placeholder="농가명 / 이력번호 검색" style="flex:1;min-width:200px;">
+          <input type="date" value="2024-07-01" style="max-width:160px;">
+          <span style="color:var(--sub);">~</span>
+          <input type="date" value="2024-07-31" style="max-width:160px;">
+          <button class="btn btn-pri">조회</button>
+          <button class="btn btn-line">⬇ 다운로드</button>
+          <button class="btn btn-line">🖨 인쇄</button>
+        </div>
+        <table class="sel">
+          <thead><tr><th>거래일</th><th>전표번호</th><th>농가명</th><th>이력번호</th><th>총 거래두수</th><th>차인지급액</th><th>상태</th><th></th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 3 : 농장정보 관리 ============ -->
+  <div class="page" id="farmPage">
+    <div class="wrap">
+      <h2 class="pg-title">농장정보 관리</h2>
+      <p class="pg-sub">거래 농장의 기본 정보 및 돼지 등급판정 시스템 연동을 위한 식별정보를 등록·관리합니다.</p>
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t"><span class="dot"></span>등록 농장 목록</div>
+          <button class="btn btn-pri btn-sm" onclick="toast('농장 등록 화면(샘플)')">+ 농장 등록</button>
+        </div>
+        <table class="sel">
+          <thead><tr><th>농장식별번호</th><th>농장명(논리명)</th><th>대표자</th><th>지급율 기준</th><th>기본 지급율</th><th>최근 거래일</th><th>상태</th><th></th></tr></thead>
+          <tbody id="farmListBody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:10px;"><span class="dot"></span>연동 필요 정보 (돼지 등급판정 시스템)</div>
+        <div class="set-grid">
+          <div>
+            <div class="opt-row"><div class="opt-l">이력번호</div><span class="badge b-gr">연동 가능</span></div>
+            <div class="opt-row"><div class="opt-l">농장명 / 농장식별번호</div><span class="badge b-gr">연동 가능</span></div>
+            <div class="opt-row"><div class="opt-l">지육번호 / 성별 / 등급</div><span class="badge b-gr">연동 가능</span></div>
+          </div>
+          <div>
+            <div class="opt-row"><div class="opt-l">지육중 / 등지방</div><span class="badge b-gr">연동 가능</span></div>
+            <div class="opt-row"><div class="opt-l">생체중</div><span class="badge b-am">제공 여부 확인 필요</span></div>
+            <div class="opt-row"><div class="opt-l">농장 코드 일치 여부</div><span class="badge b-am">협의 필요</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 4 : 공제/지급율 설정 ============ -->
+  <div class="page" id="deductPage">
+    <div class="wrap">
+      <h2 class="pg-title">공제 / 지급율 설정</h2>
+      <p class="pg-sub">농장별 또는 거래별 지급율 기준과 항목별 인상/공제 조건을 설정합니다.</p>
+
+      <div class="card">
+        <div class="card-t" style="margin-bottom:10px;"><span class="dot"></span>지급율 설정 기준</div>
+        <div class="row" style="gap:18px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;"><input type="radio" name="rateBase" checked> 농장별로 지급율 설정</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;"><input type="radio" name="rateBase"> 거래별로 지급율 설정</label>
+        </div>
+      </div>
+
+      <div class="set-grid">
+        <div class="card">
+          <div class="card-t" style="margin-bottom:6px;"><span class="dot"></span>규격 / 중량 공제</div>
+          <div class="opt-row"><div><div class="opt-l">규격 미달 (76~79kg 미만)</div><div class="opt-d">두당 10,000원 공제</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="opt-row"><div><div class="opt-l">규격 초과 (104~108kg 미만)</div><div class="opt-d">두당 10,000원 공제</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="opt-row"><div><div class="opt-l">규격 초과 (108kg 이상)</div><div class="opt-d">두당 30,000원 공제</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+        </div>
+        <div class="card">
+          <div class="card-t" style="margin-bottom:6px;"><span class="dot"></span>등지방 / 비거세돈</div>
+          <div class="opt-row"><div><div class="opt-l">등지방 12~14 / 30~32mm</div><div class="opt-d">두당 20,000원 공제</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="opt-row"><div><div class="opt-l">등지방 12mm 미만 / 32mm 이상</div><div class="opt-d">두당 30,000원 공제</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="opt-row"><div><div class="opt-l">비거세돈 초과</div><div class="opt-d">두당 1두 인정</div></div><div class="switch" onclick="this.classList.toggle('on')"><i></i></div></div>
+        </div>
+        <div class="card">
+          <div class="card-t" style="margin-bottom:6px;"><span class="dot"></span>화농공제 / 이상육 / 성비</div>
+          <div class="opt-row"><div><div class="opt-l">화농공제 / 이상육</div><div class="opt-d">발생 1두당 10,000원 공제</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="opt-row"><div><div class="opt-l">성비패널티 (거세율 75% 이상)</div><div class="opt-d">1% 공제</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <div class="opt-row"><div><div class="opt-l">성비패널티 (거세율 78% 이상)</div><div class="opt-d">0.5% 인상</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+        </div>
+        <div class="card">
+          <div class="card-t" style="margin-bottom:6px;"><span class="dot"></span>지육율 / 계류장 사돈</div>
+          <div class="tier"><span style="width:130px;color:var(--sub);">지육율 76.5% 미만</span><input type="number" value="0.5"> % 인상</div>
+          <div class="tier"><span style="width:130px;color:var(--sub);">지육율 75.5% 미만</span><input type="number" value="1"> % 공제</div>
+          <div class="opt-row" style="margin-top:8px;"><div><div class="opt-l">계류장 사돈 시 지급율</div><div class="opt-d">기준 지급율의 40%만 지급</div></div><div class="switch on" onclick="this.classList.toggle('on')"><i></i></div></div>
+        </div>
+      </div>
+      <div class="foot-actions"><button class="btn btn-line">초기화</button><button class="btn btn-pri" onclick="toast('설정이 저장되었습니다 (샘플)')">저장</button></div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 5 : 연동 구조도 ============ -->
+  <div class="page" id="flowPage">
+    <div class="wrap">
+      <h2 class="pg-title">시스템 연동 구조도</h2>
+      <p class="pg-sub">농장별 정보 설정 → 돼지 등급판정 시스템 연동 → 농장정산 프로그램 처리 흐름</p>
+      <div class="card">
+        <div class="flow">
+          <div class="fstep"><div class="n">1</div><div class="t">날짜 선택 시<br>해당 거래 매핑</div><div class="d">이력번호 / 농장식별번호 / 농장명</div></div>
+          <div class="farrow">▶</div>
+          <div class="fstep"><div class="n">2</div><div class="t">생돈 개체별 내역<br>연동/호출</div><div class="d">생체중 연동 가능 여부 확인 필요</div></div>
+          <div class="farrow">▶</div>
+          <div class="fstep"><div class="n">3</div><div class="t">평균정보 제공</div><div class="d">평균 생체중·지육율 계산</div></div>
+          <div class="farrow">▶</div>
+          <div class="fstep"><div class="n">4</div><div class="t">농장별 인상/공제<br>계산·적용</div><div class="d">설정 범위 기반 자동 계산</div></div>
+          <div class="farrow">▶</div>
+          <div class="fstep"><div class="n">5</div><div class="t">적용단가 기반<br>금액 정산</div><div class="d">생체중 × 적용단가</div></div>
+          <div class="farrow">▶</div>
+          <div class="fstep"><div class="n">6</div><div class="t">지급율(%) 기반<br>금액 정산</div><div class="d">농장/거래 기준 설정</div></div>
+          <div class="farrow">▶</div>
+          <div class="fstep"><div class="n">7</div><div class="t">정산 확정</div><div class="d">돼지거래가격 정보 시스템 등록</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t" style="margin-bottom:10px;"><span class="dot"></span>핵심 확인 필요 사항</div>
+        <div class="opt-row"><div class="opt-l">생체중 정보 제공 가능 여부</div><span class="badge b-am">확인 필요</span></div>
+        <div class="opt-row"><div class="opt-l">농장 코드 일치 필요 여부</div><span class="badge b-am">확인 필요</span></div>
+        <div class="opt-row"><div class="opt-l">지급율 - 농장별 vs 거래별 기준</div><span class="badge b-am">확인 필요</span></div>
+        <div class="opt-row"><div class="opt-l">정산 확정 후 돼지거래가격 조사시스템 전송</div><span class="badge b-gr">연동 설계 완료</span></div>
+      </div>
+    </div>
+  </div>
+
+  </main>
+</div>
+
+<!-- ============ 거래 건 선택 모달 ============ -->
+<div class="ovl" id="tradeOvl">
+  <div class="modal">
+    <div class="modal-h"><h3>거래 건 선택</h3><button class="modal-x" onclick="closeTradeModal()">✕</button></div>
+    <div class="modal-b">
+      <div class="notice">📢 <span>아래는 선택하신 일자(<b id="modalDate">-</b>)에 농가와 거래된 내역입니다.<br>총 <b id="modalCount">5</b>건의 거래가 검색되었습니다. 등록을 원하시는 거래 건을 선택해주세요.</span></div>
+      <table class="sel">
+        <thead><tr><th>No</th><th>이력번호</th><th>총 거래두수</th><th>농가명</th><th>선택</th></tr></thead>
+        <tbody id="tradeListBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== 데이터 ===================== */
+// 실제 첨부 엑셀(농장거래_계산서.xlsx) 기반 A농가 데이터
+const farmA = {
+  name:'A농가', herdNo:'118701700872', tradeQty:54, shown:35,
+  unitPrice:6057, payRate:76,
+  detail:[
+    [1,3627,'암',116.80,89,21,'1+',null,0,0,0,1500],
+    [2,3628,'거세',120.75,92,26,'1',null,0,0,0,1500],
+    [3,3629,'암',133.88,102,23,'2',null,20000,0,0,1500],
+    [4,3630,'거세',131.25,100,30,'2',null,20000,0,0,1500],
+    [5,3631,'거세',116.81,89,23,'1+',null,0,0,0,1500],
+    [6,3632,'암',119.44,91,24,'1+',null,0,0,0,1500],
+    [7,3633,'암',114.19,87,22,'1+',null,0,0,0,1500],
+    [8,3634,'거세',118.13,90,26,'1',null,0,0,0,1500],
+    [9,3635,'거세',115.50,88,24,'1+',null,0,0,0,1500],
+    [10,3636,'거세',111.56,85,30,'2',null,0,0,0,1500],
+    [11,3637,'암',114.19,87,23,'1+',null,0,0,0,1500],
+    [12,3638,'암',115.50,88,22,'1+',null,0,0,0,1500],
+    [13,3639,'암',107.63,82,19,'1',null,0,0,0,1500],
+    [14,3640,'거세',118.13,90,24,'1+',null,0,0,0,1500],
+    [15,3641,'거세',111.56,85,24,'1+',null,0,0,0,1500],
+    [16,3642,'거세',136.50,104,35,'2',null,20000,0,0,1500],
+    [17,3643,'암',114.19,87,23,'1+',null,0,0,0,1500],
+    [18,3644,'거세',107.63,82,30,'2',null,0,0,0,1500],
+    [19,3645,'암',123.38,94,24,'1',null,0,0,0,1500],
+    [20,3646,'거세',116.81,89,24,'1',null,0,0,0,1500],
+    [21,3647,'암',115.50,88,22,'1+',null,0,0,0,1500],
+    [22,3648,'거세',116.81,89,22,'1+',null,0,0,0,1500],
+    [23,3649,'암',112.88,86,21,'1+',null,0,0,0,1500],
+    [24,3650,'거세',119.44,91,20,'1+',null,0,0,0,1500],
+    [25,3651,'거세',110.25,84,22,'1+',null,0,0,0,1500],
+    [26,3652,'거세',122.06,93,29,'2',null,0,0,0,1500],
+    [27,3653,'암',120.75,92,23,'1+',null,0,0,0,1500],
+    [28,3654,'거세',131.25,100,29,'2',null,20000,0,0,1500],
+    [29,3655,'암',112.88,86,19,'1+',null,0,0,0,1500],
+    [30,3656,'거세',119.44,91,24,'1+',null,0,0,0,1500],
+    [31,3657,'거세',116.81,89,30,'2',null,0,0,0,1500],
+    [32,3658,'거세',106.31,81,31,'2',null,0,10000,0,1500],
+    [33,3659,'암',116.81,89,20,'1+',null,0,0,0,1500],
+    [34,3660,'거세',123.38,94,26,'1',null,0,0,0,1500],
+    [35,3661,'암',119.44,91,21,'1+',null,0,0,0,1500]
+  ]
+};
+
+function genFarm(name, herdNo, n, baseW, seed){
+  const sexes=['암','거세','수']; const grades=['1+','1','2'];
+  let d=[]; let s=seed;
+  const rnd=()=>{s=(s*9301+49297)%233280; return s/233280;};
+  for(let i=1;i<=n;i++){
+    const w = +(baseW + rnd()*22 - 11).toFixed(2);
+    const carc = Math.round(w*0.765);
+    const fat = Math.round(18 + rnd()*16);
+    const g = grades[Math.floor(rnd()*grades.length)];
+    const sex = sexes[Math.floor(rnd()*2)];
+    const wcut = (w>132||w<109)? 20000:0;
+    d.push([i, 3700+i*3, sex, w, carc, fat, g, null, wcut, 0, 0, 1500]);
+  }
+  return {name, herdNo, tradeQty:n, shown:n, unitPrice:6057, payRate:76, detail:d};
+}
+
+const TRADE_DB = {
+  '2024-07-08':[
+    {idx:1, herdNo:'118701700872', qty:54, name:'A농가', farm:farmA},
+    {idx:2, herdNo:'118701700873', qty:38, name:'B농가', farm:genFarm('B농가','118701700873',38,118,17)},
+    {idx:3, herdNo:'118701700874', qty:21, name:'C농가', farm:genFarm('C농가','118701700874',21,121,41)},
+    {idx:4, herdNo:'118701700875', qty:29, name:'D농가', farm:genFarm('D농가','118701700875',29,115,73)},
+    {idx:5, herdNo:'118701700876', qty:16, name:'E농가', farm:genFarm('E농가','118701700876',16,124,5)}
+  ]
+};
+
+let curFarm = null;
+const won = n => Math.round(n).toLocaleString('ko-KR')+' 원';
+
+/* ===================== 네비게이션 ===================== */
+function showPage(name, el){
+  const map={settle:'settlePage', history:'historyPage', farm:'farmPage', deduct:'deductPage', flow:'flowPage'};
+  document.querySelectorAll('.main > .page').forEach(p=>p.classList.remove('on'));
+  document.getElementById(map[name]).classList.add('on');
+  document.querySelectorAll('.nv').forEach(n=>n.classList.remove('on'));
+  if(el) el.classList.add('on');
+  document.getElementById('mainArea').scrollTo({top:0});
+}
+
+/* ===================== 거래 모달 ===================== */
+function openTradeModal(){
+  const date = document.getElementById('tradeDate').value;
+  const list = TRADE_DB[date] || [];
+  document.getElementById('modalDate').textContent = formatKDate(date);
+  document.getElementById('modalCount').textContent = list.length;
+  const tb = document.getElementById('tradeListBody');
+  if(list.length===0){
+    tb.innerHTML = '<tr><td colspan="5" style="padding:24px;color:#9aa4b2;">해당 일자에 거래된 내역이 없습니다.</td></tr>';
+  } else {
+    tb.innerHTML = list.map(t=>`
+      <tr>
+        <td>${t.idx}</td><td>${t.herdNo}</td><td>${t.qty}</td><td>${t.name}</td>
+        <td><button class="pick-btn" onclick="pickTrade('${date}',${t.idx})">선택하기</button></td>
+      </tr>`).join('');
+  }
+  document.getElementById('tradeOvl').classList.add('on');
+}
+function closeTradeModal(){ document.getElementById('tradeOvl').classList.remove('on'); }
+function formatKDate(d){
+  const dt = new Date(d+'T00:00:00');
+  const days=['일','월','화','수','목','금','토'];
+  return `${dt.getFullYear()}년 ${dt.getMonth()+1}월 ${dt.getDate()}일 (${days[dt.getDay()]})`;
+}
+function pickTrade(date, idx){
+  const t = TRADE_DB[date].find(x=>x.idx===idx);
+  curFarm = JSON.parse(JSON.stringify(t.farm));
+  closeTradeModal();
+  loadFarm();
+  toast(`${t.name} 거래 내역을 불러왔습니다.`);
+}
+
+/* ===================== 데이터 로드 / 계산 ===================== */
+function loadFarm(){
+  document.getElementById('farmTag').querySelector('#farmTagVal')?.remove();
+  document.getElementById('farmTag').innerHTML = `<span>농가 / 이력번호 :</span> <b>${curFarm.name} / ${curFarm.herdNo}</b>`;
+  document.getElementById('herdNoTag').textContent = `이력번호 : ${curFarm.herdNo} (전체 ${curFarm.tradeQty}두 중 ${curFarm.shown}두 표시)`;
+  document.getElementById('unitPrice').value = curFarm.unitPrice;
+  document.getElementById('payRate').value = curFarm.payRate;
+
+  renderDetailTable();
+  recalc();
+}
+
+function gradeTag(g){
+  const cls = g==='1+'?'g1p':g==='1'?'g1':g==='2'?'g2':'gx';
+  return `<span class="gtag ${cls}">${g}</span>`;
+}
+function sexTag(s){
+  const cls = s==='암'?'sexf':s==='거세'?'sexc':'sexm';
+  return `<span class="${cls}" style="font-weight:700;">${s}</span>`;
+}
+
+function renderDetailTable(){
+  const body = document.getElementById('detailBody');
+  body.innerHTML = curFarm.detail.map(r=>{
+    const [no, herd, sex, w, carc, fat, grade, base, wcut, fcut, etc, levy] = r;
+    return `<tr data-no="${no}">
+      <td>${no}</td><td>${herd}</td><td>${sexTag(sex)}</td>
+      <td class="wcell"><input type="number" step="0.01" value="${w}" onchange="onWeightChange(${no},this.value)"></td>
+      <td>${carc}</td><td>${fat}</td><td>${gradeTag(grade)}</td>
+      <td class="base-cell">-</td>
+      <td>${wcut?won(wcut).replace(' 원',''):'-'}</td>
+      <td>${fcut?won(fcut).replace(' 원',''):'-'}</td>
+      <td>${etc?won(etc).replace(' 원',''):'-'}</td>
+      <td>${levy.toLocaleString('ko-KR')}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('detailFoot').style.display='table-row-group';
+}
+
+function onWeightChange(no, val){
+  const row = curFarm.detail.find(r=>r[0]===no);
+  row[3] = parseFloat(val)||0;
+  recalc();
+}
+
+function recalc(){
+  if(!curFarm) return;
+  const unitPrice = parseFloat(document.getElementById('unitPrice').value)||0;
+  const payRate = parseFloat(document.getElementById('payRate').value)||0;
+
+  let sumW=0,sumCarc=0,sumFat=0,sumBase=0,sumBonus=0,sumWcut=0,sumFcut=0,sumEtc=0,sumLevy=0;
+  const grades = {'암':{'1+':0,'1':0,'2':0,'등외':0}, '수':{'1+':0,'1':0,'2':0,'등외':0}, '거세':{'1+':0,'1':0,'2':0,'등외':0}};
+
+  curFarm.detail.forEach(r=>{
+    const [no, herd, sex, w, carc, fat, grade, base, wcut, fcut, etc, levy] = r;
+    const baseAmt = w*unitPrice*payRate/100;
+    r[7]=baseAmt;
+    sumW+=w; sumCarc+=carc; sumFat+=fat; sumBase+=baseAmt;
+    sumWcut+=wcut; sumFcut+=fcut; sumEtc+=etc; sumLevy+=levy;
+    const gk = (grades[sex]&&grades[sex][grade]!==undefined) ? grade : '등외';
+    if(grades[sex]) grades[sex][gk] = (grades[sex][gk]||0)+1;
+  });
+
+  const n = curFarm.detail.length;
+  const deductTotal = sumWcut+sumFcut+sumEtc;
+  const settleAmt = sumBase - deductTotal;
+  const finalAmt = settleAmt + sumBonus - sumLevy;
+
+  // 화면 표시
+  document.getElementById('sumWeight').textContent = sumW.toFixed(2)+' kg';
+  document.getElementById('sumSettle').textContent = won(settleAmt);
+  document.getElementById('sumBonus').textContent = won(sumBonus);
+  document.getElementById('sumDeduct').textContent = won(deductTotal);
+  document.getElementById('sumLevy').textContent = won(sumLevy);
+  document.getElementById('sumFinal').textContent = won(finalAmt);
+
+  document.getElementById('avgWeight').textContent = (sumW/n).toFixed(2)+' kg';
+  document.getElementById('avgCarc').textContent = (sumCarc/n).toFixed(2)+' kg';
+  document.getElementById('avgYield').textContent = ((sumCarc/sumW)*100).toFixed(2)+' %';
+  document.getElementById('avgFat').textContent = (sumFat/n).toFixed(2)+' mm';
+
+  // 등급판정 표
+  let body='', totalAB=0, total=0;
+  ['암','수','거세'].forEach(sex=>{
+    const g = grades[sex];
+    const cnt = g['1+']+g['1']+g['2']+g['등외'];
+    if(cnt===0) return;
+    total+=cnt; totalAB += g['1+']+g['1'];
+    body += `<tr><td>${sex}</td><td>${g['1+']||'-'}</td><td>${g['1']||'-'}</td><td>${g['2']||'-'}</td><td>${g['등외']||'-'}</td><td>${cnt}</td><td>${(cnt/n*100).toFixed(2)}%</td></tr>`;
+  });
+  body += `<tr><td>합계</td><td>${grades['암']['1+']+grades['수']['1+']+grades['거세']['1+']}</td><td>${grades['암']['1']+grades['수']['1']+grades['거세']['1']}</td><td>${grades['암']['2']+grades['수']['2']+grades['거세']['2']}</td><td>${grades['암']['등외']+grades['수']['등외']+grades['거세']['등외']}</td><td>${n}</td><td>100.00%</td></tr>`;
+  document.getElementById('gradeBody').innerHTML = body;
+  document.getElementById('abRate').textContent = `AB출현율 ${(totalAB/n*100).toFixed(2)}%`;
+
+  // 디테일 테이블 기본금액
+  document.querySelectorAll('#detailBody tr').forEach(tr=>{
+    const no = +tr.dataset.no;
+    const r = curFarm.detail.find(x=>x[0]===no);
+    tr.querySelector('.base-cell').textContent = won(r[7]).replace(' 원','');
+  });
+
+  // footer
+  document.getElementById('ftWeight').textContent = sumW.toFixed(2);
+  document.getElementById('ftCarc').textContent = sumCarc;
+  document.getElementById('ftFat').textContent = (sumFat/n).toFixed(1);
+  document.getElementById('ftBase').textContent = Math.round(sumBase).toLocaleString('ko-KR');
+  document.getElementById('ftBonus').textContent = sumBonus.toLocaleString('ko-KR');
+  document.getElementById('ftW').textContent = sumWcut.toLocaleString('ko-KR');
+  document.getElementById('ftF').textContent = sumFcut.toLocaleString('ko-KR');
+  document.getElementById('ftEtc').textContent = sumEtc.toLocaleString('ko-KR');
+  document.getElementById('ftLevy').textContent = sumLevy.toLocaleString('ko-KR');
+}
+
+function resetSettle(){
+  curFarm = null;
+  document.getElementById('farmTag').innerHTML = `<span>농가 / 이력번호 :</span> <span class="empty">선택된 거래가 없습니다</span>`;
+  document.getElementById('herdNoTag').textContent = '이력번호 : -';
+  document.getElementById('detailBody').innerHTML = '<tr><td colspan="13" style="padding:40px;color:#9aa4b2;">상단에서 거래 건을 선택하면 개체별 내역이 표시됩니다.</td></tr>';
+  document.getElementById('detailFoot').style.display='none';
+  ['sumWeight','sumSettle','sumBonus','sumDeduct','sumLevy','sumFinal','avgWeight','avgCarc','avgYield','avgFat'].forEach(id=>document.getElementById(id).textContent='-');
+  document.getElementById('gradeBody').innerHTML='';
+  document.getElementById('abRate').textContent='AB출현율 -';
+}
+
+function confirmSettle(){
+  if(!curFarm){ toast('먼저 거래 건을 선택해주세요.'); return; }
+  toast(`${curFarm.name} 정산이 확정되어 돼지거래가격 조사시스템으로 전송되었습니다.`);
+  addHistoryRow();
+}
+
+/* ===================== 정산내역 조회 (모의) ===================== */
+let historySeed = [
+  {date:'2024-07-08', no:'#0002', name:'A농가', herd:'118701700872', qty:54, amt:29273700, status:'확정'},
+  {date:'2024-07-05', no:'#0001', name:'C농가', herd:'118701700860', qty:18, amt:9870500, status:'확정'},
+];
+function renderHistory(){
+  document.getElementById('historyBody').innerHTML = historySeed.map(h=>`
+    <tr><td>${h.date}</td><td>${h.no}</td><td>${h.name}</td><td>${h.herd}</td><td>${h.qty}</td><td>${h.amt.toLocaleString('ko-KR')} 원</td>
+    <td><span class="badge ${h.status==='확정'?'b-gr':'b-am'}">${h.status}</span></td>
+    <td><button class="btn btn-line btn-sm" onclick="toast('상세보기 (샘플)')">상세</button></td></tr>`).join('');
+}
+function addHistoryRow(){
+  const sumFinal = document.getElementById('sumFinal').textContent;
+  historySeed.unshift({date:document.getElementById('tradeDate').value, no:'#'+String(historySeed.length+1).padStart(4,'0'), name:curFarm.name, herd:curFarm.herdNo, qty:curFarm.tradeQty, amt:parseInt(sumFinal.replace(/[^0-9]/g,''))||0, status:'확정'});
+  renderHistory();
+}
+
+/* ===================== 농장정보 관리 (모의) ===================== */
+const farmListSeed = [
+  {id:'118701700872', name:'A농가', owner:'홍◯◯', base:'농장별', rate:'76%', last:'2024-07-08', status:'사용중'},
+  {id:'118701700873', name:'B농가', owner:'김◯◯', base:'거래별', rate:'74~78%', last:'2024-07-08', status:'사용중'},
+  {id:'118701700874', name:'C농가', owner:'이◯◯', base:'농장별', rate:'75%', last:'2024-07-08', status:'사용중'},
+  {id:'118701700875', name:'D농가', owner:'박◯◯', base:'농장별', rate:'76%', last:'2024-07-08', status:'사용중'},
+  {id:'118701700876', name:'E농가', owner:'최◯◯', base:'거래별', rate:'73~77%', last:'2024-07-08', status:'점검중'},
+];
+function renderFarmList(){
+  document.getElementById('farmListBody').innerHTML = farmListSeed.map(f=>`
+    <tr><td>${f.id}</td><td>${f.name}</td><td>${f.owner}</td><td>${f.base}</td><td>${f.rate}</td><td>${f.last}</td>
+    <td><span class="badge ${f.status==='사용중'?'b-gr':'b-am'}">${f.status}</span></td>
+    <td><button class="btn btn-line btn-sm" onclick="toast('수정 화면 (샘플)')">수정</button></td></tr>`).join('');
+}
+
+/* ===================== toast ===================== */
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('on'), 2600);
+}
+
+/* ===================== init ===================== */
+renderHistory();
+renderFarmList();
+</script>
+</body>
+</html>
