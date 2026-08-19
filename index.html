@@ -86,11 +86,16 @@ select{cursor:pointer;}
 .sum-box{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
 .sum-box.row4{grid-template-columns:repeat(4,1fr);}
 
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;}
 .kpi-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow-card);transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s ease;}
 .kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift);}
 .kpi-card .l{font-size:13px;color:var(--sub);font-weight:700;}
 .kpi-card .v{font-size:23px;font-weight:800;color:var(--navy);margin-top:6px;}
+
+.seg-group{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px;flex-shrink:0;}
+.seg-btn{border:none;background:transparent;padding:0 14px;height:30px;border-radius:6px;font-size:13px;font-weight:700;color:var(--sub);cursor:pointer;transition:background .15s ease,color .15s ease;}
+.seg-btn:hover{color:var(--navy);}
+.seg-btn.on{background:var(--navy);color:#fff;}
 
 .stat-bar-row{display:flex;align-items:center;gap:10px;margin:10px 0;}
 .stat-bar-label{width:78px;font-size:13px;color:var(--sub);font-weight:700;flex-shrink:0;}
@@ -356,9 +361,9 @@ table.sel tbody tr:hover{background:#f7fbfe;}
             <option value="">전체 농가</option>
           </select>
           <label class="lb" style="display:inline;min-width:0;">거래일</label>
-          <input type="date" id="historyFrom" value="2024-06-01" style="max-width:160px;">
+          <input type="date" id="historyFrom" value="2026-01-01" style="max-width:160px;">
           <span style="color:var(--sub);">~</span>
-          <input type="date" id="historyTo" value="2024-07-31" style="max-width:160px;">
+          <input type="date" id="historyTo" value="2026-08-20" style="max-width:160px;">
           <button class="btn btn-pri" onclick="renderHistory()">조회</button>
           <button class="btn btn-line">⬇ 다운로드</button>
           <button class="btn btn-line">🖨 인쇄</button>
@@ -551,7 +556,8 @@ table.sel tbody tr:hover{background:#f7fbfe;}
         <div class="kpi-card"><div class="l">총 거래두수</div><div class="v" id="stTotalQty">-</div></div>
         <div class="kpi-card"><div class="l">총 차인지급액</div><div class="v" id="stTotalAmt">-</div></div>
         <div class="kpi-card"><div class="l">참여 농가 수</div><div class="v" id="stFarmCnt">-</div></div>
-        <div class="kpi-card"><div class="l">평균 kg당 단가</div><div class="v" id="stAvgPrice">-</div></div>
+        <div class="kpi-card"><div class="l">평균 kg당 단가 (생체중 기준)</div><div class="v" id="stAvgPrice">-</div></div>
+        <div class="kpi-card"><div class="l">평균 kg당 단가 (지육중 기준)</div><div class="v" id="stAvgPriceCarc">-</div></div>
         <div class="kpi-card"><div class="l">평균 지육율</div><div class="v" id="stAvgYield">-</div></div>
         <div class="kpi-card"><div class="l">평균 지급율</div><div class="v" id="stAvgRate">-</div></div>
         <div class="kpi-card"><div class="l">AB출현율</div><div class="v" id="stAbRate">-</div></div>
@@ -559,23 +565,55 @@ table.sel tbody tr:hover{background:#f7fbfe;}
 
       <div class="card">
         <div class="card-h">
+          <div class="card-t"><span class="dot"></span>거래금액 및 평균 kg당가격 추이</div>
+          <div class="seg-group" id="trendGran">
+            <button class="seg-btn on" onclick="setGranularity('trend','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularity('trend','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularity('trend','day',this)">일</button>
+          </div>
+        </div>
+        <div id="trendChart"></div>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('trendTbl','거래금액_평균단가_추이.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="trendTbl">
+          <thead><tr id="trendTblHead"><th>구분</th></tr></thead>
+          <tbody id="trendTblBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">
           <div class="card-t"><span class="dot"></span>등급판정 분포 (전체 개체 기준)</div>
-          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stGradeTbl','등급판정_분포.xls')">⬇ 엑셀 다운로드</button>
+          <div class="seg-group" id="gradeGranGroup">
+            <button class="seg-btn on" onclick="setGranularity('grade','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularity('grade','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularity('grade','day',this)">일</button>
+          </div>
         </div>
         <div id="stGradeBars"></div>
-        <table class="mini-tbl" id="stGradeTbl" style="margin-top:14px;">
-          <thead><tr><th>성별</th><th>1+</th><th>1</th><th>2</th><th>등외</th><th>계</th><th>비율</th></tr></thead>
-          <tbody id="stGradeBody"></tbody>
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stGradeTbl','등급판정_분포.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
+        <table class="sel" id="stGradeTbl">
+          <thead><tr id="stGradeTblHead"><th>구분</th></tr></thead>
+          <tbody id="stGradeTblBody"></tbody>
         </table>
+        </div>
       </div>
 
       <div class="card">
         <div class="card-h">
           <div class="card-t"><span class="dot"></span>농가별 실적 순위</div>
-          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stFarmRankTbl','농가별_실적순위.xls')">⬇ 엑셀 다운로드</button>
         </div>
         <div id="stFarmRankBars"></div>
-        <div class="tblx" style="margin-top:14px;">
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stFarmRankTbl','농가별_실적순위.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
         <table class="sel" id="stFarmRankTbl">
           <thead><tr><th>순위</th><th>농가명</th><th>거래건수</th><th>거래두수</th><th>총 거래금액</th><th>두당 평균지급액</th></tr></thead>
           <tbody id="stFarmRankBody"></tbody>
@@ -586,13 +624,20 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       <div class="card">
         <div class="card-h">
           <div class="card-t"><span class="dot"></span>공제 항목별 발생 현황</div>
-          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stDeductTbl','공제항목별_현황.xls')">⬇ 엑셀 다운로드</button>
+          <div class="seg-group" id="deductGranGroup">
+            <button class="seg-btn on" onclick="setGranularity('deduct','month',this)">월</button>
+            <button class="seg-btn" onclick="setGranularity('deduct','week',this)">주</button>
+            <button class="seg-btn" onclick="setGranularity('deduct','day',this)">일</button>
+          </div>
         </div>
         <div id="stDeductBars"></div>
-        <div class="tblx" style="margin-top:14px;">
+        <div class="row" style="justify-content:flex-end;margin:14px 0 8px;">
+          <button class="btn btn-line btn-sm" onclick="exportTableExcel('stDeductTbl','공제항목별_현황.xls')">⬇ 엑셀 다운로드</button>
+        </div>
+        <div class="tblx">
         <table class="sel" id="stDeductTbl">
-          <thead><tr><th>공제 항목</th><th>발생 건수(개체)</th><th>총 공제액</th></tr></thead>
-          <tbody id="stDeductBody"></tbody>
+          <thead><tr id="stDeductTblHead"><th>공제 항목</th></tr></thead>
+          <tbody id="stDeductTblBody"></tbody>
         </table>
         </div>
       </div>
@@ -681,7 +726,9 @@ const farmA = {
   ]
 };
 
-function genFarm(name, herdNo, n, baseW, seed){
+function genFarm(name, herdNo, n, baseW, seed, unitPrice, payRate){
+  unitPrice = unitPrice || 6057;
+  payRate = payRate || 76;
   const sexes=['암','거세','수']; const grades=['1+','1','2'];
   let d=[]; let s=seed;
   const rnd=()=>{s=(s*9301+49297)%233280; return s/233280;};
@@ -694,7 +741,7 @@ function genFarm(name, herdNo, n, baseW, seed){
     const wcut = (w>132||w<109)? 20000:0;
     d.push([i, 3700+i*3, sex, w, carc, fat, g, null, wcut, 0, 0, 1500]);
   }
-  return {name, herdNo, tradeQty:n, shown:n, unitPrice:6057, payRate:76, detail:d};
+  return {name, herdNo, tradeQty:n, shown:n, unitPrice, payRate, detail:d};
 }
 
 const TRADE_DB = {
@@ -961,24 +1008,49 @@ function confirmSettle(){
   addHistoryRow();
 }
 
-/* ===================== 거래내역 조회 (모의) ===================== */
-let historySeed = [
-  {date:'2024-07-08', no:'TRD-20240708-0014', name:'A농가', herd:'118701700872', qty:54, amt:29273700, status:'확정', mdate:'2024-07-08 17:42'},
-  {date:'2024-07-08', no:'TRD-20240708-0013', name:'B농가', herd:'118701700873', qty:38, amt:19850400, status:'확정', mdate:'2024-07-09 09:15'},
-  {date:'2024-07-05', no:'TRD-20240705-0012', name:'C농가', herd:'118701700874', qty:18, amt:9870500, status:'확정', mdate:'2024-07-05 16:03'},
-  {date:'2024-07-03', no:'TRD-20240703-0011', name:'D농가', herd:'118701700875', qty:29, amt:15660900, status:'확정', mdate:'2024-07-03 18:27'},
-  {date:'2024-07-01', no:'TRD-20240701-0010', name:'E농가', herd:'118701700876', qty:16, amt:8320000, status:'확정', mdate:'2024-07-02 10:51'},
-  {date:'2024-06-28', no:'TRD-20240628-0009', name:'F농가', herd:'118701700877', qty:24, amt:12480000, status:'대기', mdate:'2024-06-28 14:20'},
-  {date:'2024-06-25', no:'TRD-20240625-0008', name:'G농가', herd:'118701700878', qty:31, amt:16740000, status:'확정', mdate:'2024-06-25 17:08'},
-  {date:'2024-06-22', no:'TRD-20240622-0007', name:'A농가', herd:'118701700872', qty:47, amt:25380000, status:'확정', mdate:'2024-06-22 15:44'},
-  {date:'2024-06-19', no:'TRD-20240619-0006', name:'H농가', herd:'118701700879', qty:12, amt:6240000, status:'확정', mdate:'2024-06-19 11:37'},
-  {date:'2024-06-17', no:'TRD-20240617-0005', name:'B농가', herd:'118701700873', qty:35, amt:18900000, status:'확정', mdate:'2024-06-20 08:52'},
-  {date:'2024-06-14', no:'TRD-20240614-0004', name:'I농가', herd:'118701700880', qty:9, amt:4680000, status:'대기', mdate:'2024-06-14 13:19'},
-  {date:'2024-06-12', no:'TRD-20240612-0003', name:'C농가', herd:'118701700874', qty:21, amt:11340000, status:'확정', mdate:'2024-06-12 16:55'},
-  {date:'2024-06-10', no:'TRD-20240610-0002', name:'D농가', herd:'118701700875', qty:26, amt:14040000, status:'확정', mdate:'2024-06-10 17:11'},
-  {date:'2024-06-08', no:'TRD-20240608-0001', name:'J농가', herd:'118701700881', qty:15, amt:7800000, status:'확정', mdate:'2024-06-08 12:30'},
+/* ===================== 거래내역 조회 (모의 데이터 자동 생성) ===================== */
+// 2026-01-01 ~ 2026-08-20(오늘) 사이에 약 200건의 거래내역을 절차적으로 생성
+const HIST_FARM_POOL = [
+  {name:'A농가', herd:'118701700872'}, {name:'B농가', herd:'118701700873'},
+  {name:'C농가', herd:'118701700874'}, {name:'D농가', herd:'118701700875'},
+  {name:'E농가', herd:'118701700876'}, {name:'F농가', herd:'118701700877'},
+  {name:'G농가', herd:'118701700878'}, {name:'H농가', herd:'118701700879'},
+  {name:'I농가', herd:'118701700880'}, {name:'J농가', herd:'118701700881'}
 ];
-let slipSeq = 14;
+function offsetToDate2026(offset){
+  const d = new Date(2026,0,1);
+  d.setDate(d.getDate()+offset);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function generateHistorySeed(count, seed){
+  let s = seed;
+  const rnd = ()=>{ s = (s*9301+49297)%233280; return s/233280; };
+  const DAY_SPAN = 232; // 2026-01-01 ~ 2026-08-20
+  const rows = [];
+  for(let i=0;i<count;i++){
+    const date = offsetToDate2026(Math.floor(rnd()*DAY_SPAN));
+    const farm = HIST_FARM_POOL[Math.floor(rnd()*HIST_FARM_POOL.length)];
+    const qty = 8 + Math.floor(rnd()*48);
+    const baseW = 108 + rnd()*24;
+    const unitPrice = 5600 + Math.floor(rnd()*1000);
+    const payRate = Math.round((73 + rnd()*6)*10)/10;
+    const variance = 0.94 + rnd()*0.1;
+    const amt = Math.round(qty*baseW*unitPrice*(payRate/100)*variance/100)*100;
+    const status = rnd() < 0.9 ? '확정' : '대기';
+    const hh = String(8+Math.floor(rnd()*10)).padStart(2,'0');
+    const mm = String(Math.floor(rnd()*60)).padStart(2,'0');
+    rows.push({date, name:farm.name, herd:farm.herd, qty, amt, unitPrice, payRate, status, _mtime:`${hh}:${mm}`});
+  }
+  rows.sort((a,b)=> a.date<b.date?-1:a.date>b.date?1:0);
+  rows.forEach((r,idx)=>{
+    r.no = `TRD-${r.date.replace(/-/g,'')}-${String(idx+1).padStart(4,'0')}`;
+    r.mdate = `${r.date} ${r._mtime}`;
+    delete r._mtime;
+  });
+  return rows.reverse(); // 최신 거래일이 먼저 오도록
+}
+let historySeed = generateHistorySeed(200, 20260101);
+let slipSeq = historySeed.length;
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function nowStr(){
   const d = new Date();
@@ -1026,7 +1098,7 @@ function buildFarmDataFromHistory(h){
   const match = dayList.find(t=>t.herdNo===h.herd);
   if(match) return JSON.parse(JSON.stringify(match.farm));
   const seed = (parseInt((h.no.match(/(\d+)$/)||[])[1],10) || 1) * 7 + 3;
-  return genFarm(h.name, h.herd, h.qty, 119, seed);
+  return genFarm(h.name, h.herd, h.qty, 119, seed, h.unitPrice, h.payRate);
 }
 /* ===================== 통계 ===================== */
 function computeAllStats(from, to, farmName){
@@ -1081,6 +1153,195 @@ function statBarRow(label, val, total, colorVar, valueText){
   </div>`;
 }
 
+/* ---- 거래금액/평균단가 추이 (월·주·일) ---- */
+/* ---- 기간(월/주/일) 공통 유틸 ---- */
+const granState = {trend:'month', grade:'month', deduct:'month'};
+function setGranularity(kind, gran, el){
+  granState[kind] = gran;
+  const groupId = kind==='trend' ? 'trendGran' : kind==='grade' ? 'gradeGranGroup' : 'deductGranGroup';
+  document.querySelectorAll('#'+groupId+' .seg-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  if(kind==='trend') renderTrendChart();
+  else if(kind==='grade') renderGradeTrend();
+  else renderDeductTrend();
+}
+function periodKey(dateStr, gran){
+  if(gran==='day') return dateStr;
+  if(gran==='month') return dateStr.slice(0,7);
+  const d = new Date(dateStr+'T00:00:00');
+  const day = d.getDay();
+  const diffToMon = (day===0?-6:1-day);
+  const monday = new Date(d); monday.setDate(d.getDate()+diffToMon);
+  return monday.toISOString().slice(0,10);
+}
+function periodLabel(key, gran){ return gran==='week' ? key+'주' : key; }
+function filteredConfirmedRows(){
+  const from = document.getElementById('statsFrom')?.value || '';
+  const to = document.getElementById('statsTo')?.value || '';
+  const farmName = document.getElementById('statsFarmFilter')?.value || '';
+  return historySeed.filter(h=>{
+    if(h.status!=='확정') return false;
+    if(farmName && h.name!==farmName) return false;
+    if(from && h.date<from) return false;
+    if(to && h.date>to) return false;
+    return true;
+  });
+}
+
+/* ---- 공통 막대+선 그래프 (기간 스크롤형) ---- */
+function renderBarLineChart(containerId, data, opts){
+  const wrap = document.getElementById(containerId);
+  if(!wrap) return;
+  if(data.length===0){
+    wrap.innerHTML = '<p style="color:var(--sub);font-size:13px;padding:24px 0;text-align:center;">해당 조건의 데이터가 없습니다.</p>';
+    return;
+  }
+  const n = data.length;
+  const rotateLabels = opts.gran !== 'month';
+  const slot = 56;
+  const padL=56, padR = opts.lineField ? 56 : 24, padT=20, padB = rotateLabels?64:40;
+  const plotW = Math.max(560, n*slot);
+  const W = plotW+padL+padR, H = 300;
+  const plotH = H-padT-padB;
+  const barVals = data.map(d=>d[opts.barField]);
+  const maxBar = Math.max(...barVals, 1) * 1.15;
+  let lineVals=[], minLine=0, maxLine=1, lineRange=1;
+  if(opts.lineField){
+    lineVals = data.map(d=>d[opts.lineField]);
+    minLine = Math.min(...lineVals) * 0.95;
+    maxLine = Math.max(...lineVals, minLine+1) * 1.05;
+    lineRange = (maxLine-minLine) || 1;
+  }
+  const barW = Math.min(slot*0.5, 40);
+
+  let bars='', xlabels='', pts=[];
+  data.forEach((d,i)=>{
+    const cx = padL + slot*i + slot/2;
+    const bh = (barVals[i]/maxBar)*plotH;
+    bars += `<rect x="${(cx-barW/2).toFixed(1)}" y="${(padT+plotH-bh).toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${opts.barColor}" rx="3"/>`;
+    if(opts.lineField){
+      const py = padT + plotH - ((lineVals[i]-minLine)/lineRange)*plotH;
+      pts.push([cx,py]);
+    }
+    const ly = padT+plotH+16;
+    xlabels += rotateLabels
+      ? `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="end" font-size="11" fill="#64748b" transform="rotate(-45 ${cx.toFixed(1)} ${ly})">${d.label}</text>`
+      : `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="11" fill="#64748b">${d.label}</text>`;
+  });
+  let line='', dots='';
+  if(opts.lineField){
+    line = `<polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${opts.lineColor}" stroke-width="2.5"/>`;
+    dots = pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${opts.lineColor}"/>`).join('');
+  }
+  let grid='';
+  for(let t=0;t<=4;t++){
+    const y = padT + plotH - (plotH/4)*t;
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="#eef1f5" stroke-width="1"/>`;
+    grid += `<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#64748b">${Math.round(maxBar/4*t).toLocaleString('ko-KR')}</text>`;
+    if(opts.lineField){
+      grid += `<text x="${W-padR+8}" y="${(y+4).toFixed(1)}" text-anchor="start" font-size="11" fill="#64748b">${(minLine+lineRange/4*t).toFixed(opts.lineDecimals||0)}</text>`;
+    }
+  }
+  let legend = `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.barColor};border-radius:2px;margin-right:5px;"></span>${opts.barLabel}</span>`;
+  if(opts.lineField) legend += `<span><span style="display:inline-block;width:10px;height:10px;background:${opts.lineColor};border-radius:50%;margin-right:5px;"></span>${opts.lineLabel}</span>`;
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto;">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;">${grid}${bars}${line}${dots}${xlabels}</svg>
+    </div>
+    <div style="display:flex;gap:18px;justify-content:center;margin-top:4px;font-size:12.5px;color:var(--sub);">${legend}</div>`;
+}
+
+/* ---- 거래금액 및 평균 kg당가격 추이 ---- */
+function computeTrendData(gran){
+  const buckets = {};
+  filteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, amt:0, priceWeighted:0, weight:0};
+    buckets[key].amt += h.amt;
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      const w = r[3];
+      buckets[key].weight += w;
+      buckets[key].priceWeighted += (farm.unitPrice||0) * w;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>({
+    label: periodLabel(k, gran),
+    amtWan: Math.round(buckets[k].amt/10000),
+    price: buckets[k].weight>0 ? Math.round(buckets[k].priceWeighted/buckets[k].weight) : 0
+  }));
+}
+function renderTrendChart(){
+  const gran = granState.trend;
+  const data = computeTrendData(gran);
+  renderBarLineChart('trendChart', data, {gran, barField:'amtWan', barColor:'#1a5fb4', barLabel:'거래금액(만원)', lineField:'price', lineColor:'#f5870a', lineLabel:'평균 kg당가격(원)'});
+  document.getElementById('trendTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('trendTblBody').innerHTML =
+    '<tr><td>거래금액(만원)</td>' + data.map(d=>`<td>${d.amtWan.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>평균 kg당가격(원)</td>' + data.map(d=>`<td>${d.price.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+}
+
+/* ---- 등급판정 분포 추이 ---- */
+function computeGradeTrendData(gran){
+  const buckets = {};
+  filteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, total:0, ab:0};
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      const grade = r[6];
+      buckets[key].total += 1;
+      if(grade==='1+'||grade==='1') buckets[key].ab += 1;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>({
+    label: periodLabel(k, gran),
+    total: buckets[k].total,
+    abRate: buckets[k].total>0 ? +(buckets[k].ab/buckets[k].total*100).toFixed(1) : 0
+  }));
+}
+function renderGradeTrend(){
+  const gran = granState.grade;
+  const data = computeGradeTrendData(gran);
+  renderBarLineChart('stGradeBars', data, {gran, barField:'total', barColor:'#1a5fb4', barLabel:'개체수(두)', lineField:'abRate', lineColor:'#f5870a', lineLabel:'AB출현율(%)', lineDecimals:1});
+  document.getElementById('stGradeTblHead').innerHTML = '<th>구분</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('stGradeTblBody').innerHTML =
+    '<tr><td>개체수(두)</td>' + data.map(d=>`<td>${d.total.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>AB출현율(%)</td>' + data.map(d=>`<td>${d.abRate}</td>`).join('') + '</tr>';
+}
+
+/* ---- 공제 항목별 발생 현황 추이 ---- */
+function computeDeductTrendData(gran){
+  const buckets = {};
+  filteredConfirmedRows().forEach(h=>{
+    const key = periodKey(h.date, gran);
+    if(!buckets[key]) buckets[key] = {key, wcut:0, fcut:0, etc:0, levy:0};
+    const farm = buildFarmDataFromHistory(h);
+    farm.detail.forEach(r=>{
+      buckets[key].wcut += r[8]||0;
+      buckets[key].fcut += r[9]||0;
+      buckets[key].etc += r[10]||0;
+      buckets[key].levy += r[11]||0;
+    });
+  });
+  return Object.keys(buckets).sort().map(k=>{
+    const b = buckets[k];
+    return {label: periodLabel(k, gran), wcut:b.wcut, fcut:b.fcut, etc:b.etc, levy:b.levy, total:b.wcut+b.fcut+b.etc};
+  });
+}
+function renderDeductTrend(){
+  const gran = granState.deduct;
+  const data = computeDeductTrendData(gran);
+  renderBarLineChart('stDeductBars', data, {gran, barField:'total', barColor:'#f5870a', barLabel:'품질 공제액(원, 자조금외 제외)'});
+  document.getElementById('stDeductTblHead').innerHTML = '<th>공제 항목</th>' + data.map(d=>`<th>${d.label}</th>`).join('');
+  document.getElementById('stDeductTblBody').innerHTML =
+    '<tr><td>중량공제</td>' + data.map(d=>`<td>${d.wcut.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>등지방공제</td>' + data.map(d=>`<td>${d.fcut.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>기타공제</td>' + data.map(d=>`<td>${d.etc.toLocaleString('ko-KR')}</td>`).join('') + '</tr>' +
+    '<tr><td>자조금외</td>' + data.map(d=>`<td>${d.levy.toLocaleString('ko-KR')}</td>`).join('') + '</tr>';
+}
+
 function resetStatsFilter(){
   document.getElementById('statsFrom').value = '';
   document.getElementById('statsTo').value = '';
@@ -1103,24 +1364,10 @@ function renderStats(){
   setText('stTotalAmt', won(s.totalAmt));
   setText('stFarmCnt', farmListSeed.length.toLocaleString('ko-KR')+'개소');
   setText('stAvgPrice', s.totalW>0 ? Math.round(s.priceWeighted/s.totalW).toLocaleString('ko-KR')+' 원/kg' : '-');
+  setText('stAvgPriceCarc', s.totalCarc>0 ? Math.round(s.priceWeighted/s.totalCarc).toLocaleString('ko-KR')+' 원/kg' : '-');
   setText('stAvgYield', s.totalW>0 ? (s.totalCarc/s.totalW*100).toFixed(2)+' %' : '-');
   setText('stAvgRate', s.totalW>0 ? (s.rateWeighted/s.totalW).toFixed(2)+' %' : '-');
   setText('stAbRate', s.totalHeads>0 ? (abCnt/s.totalHeads*100).toFixed(2)+' %' : '-');
-
-  let gradeBody = '';
-  ['암','수','거세'].forEach(sex=>{
-    const g = s.gradeCounts[sex];
-    const cnt = g['1+']+g['1']+g['2']+g['등외'];
-    if(cnt===0) return;
-    gradeBody += `<tr><td>${sex}</td><td>${g['1+']||'-'}</td><td>${g['1']||'-'}</td><td>${g['2']||'-'}</td><td>${g['등외']||'-'}</td><td>${cnt}</td><td>${(cnt/s.totalHeads*100).toFixed(2)}%</td></tr>`;
-  });
-  gradeBody += `<tr><td>합계</td><td>${totalGrade['1+']}</td><td>${totalGrade['1']}</td><td>${totalGrade['2']}</td><td>${totalGrade['등외']}</td><td>${s.totalHeads}</td><td>100.00%</td></tr>`;
-  document.getElementById('stGradeBody').innerHTML = gradeBody;
-  document.getElementById('stGradeBars').innerHTML =
-    statBarRow('1+등급', totalGrade['1+'], s.totalHeads, '--green') +
-    statBarRow('1등급', totalGrade['1'], s.totalHeads, '--blue') +
-    statBarRow('2등급', totalGrade['2'], s.totalHeads, '--amber') +
-    statBarRow('등외', totalGrade['등외'], s.totalHeads, '--red');
 
   const ranked = Object.values(s.farmAgg).sort((a,b)=>b.amt-a.amt);
   document.getElementById('stFarmRankBody').innerHTML = ranked.map((f,i)=>`
@@ -1130,17 +1377,9 @@ function renderStats(){
     statBarRow(f.name, f.amt, maxFarmAmt, '--blue', won(f.amt))
   ).join('') || '<p style="color:var(--sub);font-size:13px;">데이터가 없습니다.</p>';
 
-  document.getElementById('stDeductBody').innerHTML = `
-    <tr><td>중량공제</td><td>${s.wcutCnt.toLocaleString('ko-KR')}건</td><td>${won(s.wcutSum)}</td></tr>
-    <tr><td>등지방공제</td><td>${s.fcutCnt.toLocaleString('ko-KR')}건</td><td>${won(s.fcutSum)}</td></tr>
-    <tr><td>기타공제(화농·이상육 등)</td><td>${s.etcCnt.toLocaleString('ko-KR')}건</td><td>${won(s.etcSum)}</td></tr>
-    <tr><td>자조금외</td><td>${s.totalHeads.toLocaleString('ko-KR')}건</td><td>${won(s.levySum)}</td></tr>`;
-  const maxDeduct = Math.max(s.wcutSum, s.fcutSum, s.etcSum, s.levySum, 1);
-  document.getElementById('stDeductBars').innerHTML =
-    statBarRow('중량공제', s.wcutSum, maxDeduct, '--amber', won(s.wcutSum)) +
-    statBarRow('등지방공제', s.fcutSum, maxDeduct, '--amber', won(s.fcutSum)) +
-    statBarRow('기타공제', s.etcSum, maxDeduct, '--red', won(s.etcSum)) +
-    statBarRow('자조금외', s.levySum, maxDeduct, '--blue', won(s.levySum));
+  renderTrendChart();
+  renderGradeTrend();
+  renderDeductTrend();
 }
 
 function exportTableExcel(tableId, filename){
@@ -1313,12 +1552,19 @@ function addHistoryRow(){
 
 /* ===================== 농장정보 관리 (모의) ===================== */
 const farmListSeed = [
-  {id:'118701700872', name:'A농가', bizNo:'123-45-67890', owner:'홍◯◯', base:'농장별', rate:'76%', dealCnt:12, last:'2024-07-08'},
-  {id:'118701700873', name:'B농가', bizNo:'234-56-78901', owner:'김◯◯', base:'거래별', rate:'거래 시 설정', dealCnt:8, last:'2024-07-08'},
-  {id:'118701700874', name:'C농가', bizNo:'345-67-89012', owner:'이◯◯', base:'농장별', rate:'75%', dealCnt:5, last:'2024-07-08'},
-  {id:'118701700875', name:'D농가', bizNo:'456-78-90123', owner:'박◯◯', base:'농장별', rate:'76%', dealCnt:6, last:'2024-07-08'},
-  {id:'118701700876', name:'E농가', bizNo:'567-89-01234', owner:'최◯◯', base:'거래별', rate:'거래 시 설정', dealCnt:3, last:'2024-07-08'},
+  {id:'118701700872', name:'A농가', bizNo:'123-45-67890', owner:'홍◯◯', base:'농장별', rate:'76%', dealCnt:0, last:'-'},
+  {id:'118701700873', name:'B농가', bizNo:'234-56-78901', owner:'김◯◯', base:'거래별', rate:'거래 시 설정', dealCnt:0, last:'-'},
+  {id:'118701700874', name:'C농가', bizNo:'345-67-89012', owner:'이◯◯', base:'농장별', rate:'75%', dealCnt:0, last:'-'},
+  {id:'118701700875', name:'D농가', bizNo:'456-78-90123', owner:'박◯◯', base:'농장별', rate:'76%', dealCnt:0, last:'-'},
+  {id:'118701700876', name:'E농가', bizNo:'567-89-01234', owner:'최◯◯', base:'거래별', rate:'거래 시 설정', dealCnt:0, last:'-'},
 ];
+function syncFarmDealCounts(){
+  farmListSeed.forEach(f=>{
+    const confirmedRows = historySeed.filter(h=>h.herd===f.id && h.status==='확정');
+    f.dealCnt = confirmedRows.length;
+    f.last = confirmedRows.reduce((max,h)=> (!max||h.date>max) ? h.date : max, '') || '-';
+  });
+}
 function renderFarmList(){
   const field = document.getElementById('farmSearchField')?.value || 'all';
   const kw = (document.getElementById('farmSearch')?.value || '').trim().toLowerCase();
@@ -1396,6 +1642,7 @@ function toast(msg){
 }
 
 /* ===================== init ===================== */
+syncFarmDealCounts();
 renderFarmList();
 populateHistoryFarmFilter();
 renderHistory();
