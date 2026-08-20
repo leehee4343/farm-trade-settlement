@@ -284,7 +284,7 @@ table.sel tbody tr:hover{background:#f7fbfe;}
       <div class="card">
         <div class="card-h"><div class="card-t"><span class="dot"></span>생동정산요약</div></div>
         <div class="row" style="gap:20px;">
-          <span><label class="lb" style="display:inline;min-width:0;">생체중계<span class="req">*</span></label> <b id="sumWeight">- kg</b></span>
+          <span><label class="lb" style="display:inline;min-width:0;">생체중계<span class="req">*</span></label> <input type="number" step="0.01" id="sumWeight" oninput="recalc()" style="width:110px;text-align:right;"> kg</span>
           <span><label class="lb" style="display:inline;min-width:0;">적용단가<span class="req">*</span></label> <input type="number" id="unitPrice" value="6057" oninput="recalc()" style="width:100px;text-align:right;"> 원/kg</span>
           <span><label class="lb" style="display:inline;min-width:0;">지급율<span class="req">*</span></label> <input type="number" id="payRate" value="76" oninput="recalc()" style="width:70px;text-align:right;"> %</span>
           <button class="btn btn-acc btn-sm" id="calcBtn" onclick="recalc(true)">계산하기</button>
@@ -1036,7 +1036,7 @@ function updateStatementMode(){
   const searchBtn = document.getElementById('tradeSearchBtn');
   if(searchBtn) searchBtn.style.display = identityEditable ? '' : 'none';
 
-  ['unitPrice','payRate'].forEach(id=>{
+  ['unitPrice','payRate','sumWeight'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.disabled = !contentEditable;
   });
@@ -1191,6 +1191,8 @@ function loadFarm(){
   setText('herdNoTag', `이력번호 : ${curFarm.herdNo} (전체 ${curFarm.tradeQty}두 중 ${curFarm.shown}두 표시)`);
   document.getElementById('unitPrice').value = curFarm.unitPrice;
   document.getElementById('payRate').value = curFarm.payRate;
+  const scaleW = curFarm.detail.reduce((sum,r)=>sum+r[3], 0);
+  document.getElementById('sumWeight').value = scaleW.toFixed(2);
 
   renderDetailTable();
   recalc();
@@ -1252,8 +1254,7 @@ function recalc(){
   const settleAmt = sumBase - deductTotal;
   const finalAmt = settleAmt + sumBonus - sumLevy;
 
-  // 화면 표시
-  setText('sumWeight', sumW.toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2})+' kg');
+  // 화면 표시 (생체중계는 계근 값을 직접 입력하는 항목이라 자동 갱신하지 않음)
   setText('sumSettle', won(settleAmt));
   setText('sumBonus', won(sumBonus));
   setText('sumDeduct', won(deductTotal));
@@ -1308,7 +1309,8 @@ function resetSettle(){
   setText('herdNoTag', '이력번호 : -');
   document.getElementById('detailBody').innerHTML = '<tr><td colspan="13" style="padding:40px;color:#9aa4b2;">상단에서 거래 건을 선택하면 개체별 내역이 표시됩니다.</td></tr>';
   document.getElementById('detailFoot').style.display='none';
-  ['sumWeight','sumSettle','sumBonus','sumDeduct','sumLevy','sumFinal','avgWeight','avgCarc','avgYield','avgFat'].forEach(id=>setText(id,'-'));
+  document.getElementById('sumWeight').value = '';
+  ['sumSettle','sumBonus','sumDeduct','sumLevy','sumFinal','avgWeight','avgCarc','avgYield','avgFat'].forEach(id=>setText(id,'-'));
   document.getElementById('gradeBody').innerHTML='';
   setText('abRate', 'AB출현율 -');
 }
@@ -2464,7 +2466,7 @@ function exportStatementExcel(){
     <br>
     <table border="1">
       <tr><th colspan="2">생동정산요약</th><th colspan="2"></th></tr>
-      <tr><td>생체중계</td><td>${gv('sumWeight')}</td><td>적용단가</td><td>${document.getElementById('unitPrice')?.value||''} 원/kg</td></tr>
+      <tr><td>생체중계</td><td>${document.getElementById('sumWeight')?.value||''} kg</td><td>적용단가</td><td>${document.getElementById('unitPrice')?.value||''} 원/kg</td></tr>
       <tr><td>지급율</td><td>${document.getElementById('payRate')?.value||''} %</td><td>정산액</td><td>${gv('sumSettle')}</td></tr>
       <tr><td>장려금</td><td>${gv('sumBonus')}</td><td>공제액(합)</td><td>${gv('sumDeduct')}</td></tr>
       <tr><td>자조금외</td><td>${gv('sumLevy')}</td><td>차인지급액</td><td>${gv('sumFinal')}</td></tr>
